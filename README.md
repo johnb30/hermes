@@ -2,7 +2,7 @@
 
 ## Services
 
-Hermes serves as a RESTful API wrapper for a number of text processing
+Hermes is a RESTful API wrapper for a number of text processing
 services, allowing for the quick generation of text features. We've tried to
 make it as easy as possible to deploy the service on your own system by
 containerizing each piece with [Docker](https://www.docker.com/whatisdocker/) (i.e. text
@@ -13,7 +13,7 @@ features in a box). The following services are currently implemented:
     [CLAVIN](https://github.com/Berico-Technologies/CLAVIN/tree/stable/1.1.x).
     Andy Halterman has an image for running CLIFF over on [Docker
     Hub](https://registry.hub.docker.com/u/ahalterman/cliff/)
-- **Topic Models:** LDA model with 50 topics, impleneted in
+- **Topic Models:** LDA model with 50 topics, implemented in
     [gensim](https://radimrehurek.com/gensim/)
 
 ## Running
@@ -34,7 +34,7 @@ separate, rebel-held part of the city."}' -X POST http://localhost:5000/
 ```
 
 If you are on OS X, swap out `localhost` for whatever your boot2docker IP
-address is. You can find this by running `boot2docker ip`.
+address is. You can find it by running `boot2docker ip`.
 
 The response should look like this:
 
