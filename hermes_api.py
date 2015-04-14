@@ -33,13 +33,30 @@ class HermesAPI(Resource):
         super(HermesAPI, self).__init__()
 
     def post(self):
-        args = self.reqparse.parse_args()
-        payload = {'content': args['content']}
-        ip = os.environ['MITIE_PORT_5001_TCP_ADDR']
-        url = 'http://' + ip + ':5001'
+        args = self.reqparse.parse_args() # setup the request parameters
+        mitie_payload = {'content': args['content'].encode('utf-8')}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        r = requests.post(url, json=payload)
-        return {'MITIE': r.json()}, 201
+
+        mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR'] # get MITIE endpoint
+        mitie_url = 'http://' + mitie_ip + ':5001'
+        try:
+            mitie_r = requests.post(mitie_url, json=mitie_payload) # hit MITIE containter
+        except:
+            mitie_r = {'MITIE request failed'}
+
+        cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
+        cliff_url = "http://{}:{}/CLIFF-2.0.0/parse/text".format(cliff_ip, '8080')
+        cliff_payload = {'q': args['content'].encode('utf-8')}
+        try:
+            cliff_r = requests.get(cliff_url, params=cliff_payload)
+        except:
+            cliff_r = {'CLIFF request failed'}
+
+#       topics_ip =
+#       topics_url =
+#       topics_r =
+
+        return {'MITIE': mitie_r.json(), 'CLIFF': cliff_r.json()}, 201
 
 api.add_resource(HermesAPI, '/')
 

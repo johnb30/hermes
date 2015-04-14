@@ -1,4 +1,4 @@
 requests
-flask==0.10.1
-flask-RESTful==0.3.2
+Flask==0.10.1
+Flask-RESTful==0.3.2
 Flask-HTTPAuth

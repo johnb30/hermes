@@ -1,8 +1,8 @@
 # Hermes
 
-## Text features in a box.
+## Running
 
-Requires docker-compose, which you can install via `sudo pip install -U
+Hermes requires docker-compose, which you can install via `sudo pip install -U
 docker-compose`. If you're on OS X be sure to set your environemnt variable
 correctly using: `(boot2docker shellinit)`.
 
