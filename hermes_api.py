@@ -6,6 +6,9 @@ import requests
 from flask import Flask, jsonify, make_response
 from flask.ext.restful import Api, Resource, reqparse
 from flask.ext.httpauth import HTTPBasicAuth
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
 
 app = Flask(__name__)
 api = Api(app)
@@ -19,9 +22,17 @@ def get_password(username):
 
 @auth.error_handler
 def unauthorized():
-        # return 403 instead of 401 to prevent browsers from displaying the
-        # default auth dialog
+    # return 403 instead of 401 to prevent browsers from displaying the
+    # default auth dialog
     return make_response(jsonify({'message': 'Unauthorized access'}), 403)
+
+@app.errorhandler(400)
+def bad_request(error):
+    return make_response(jsonify({'error': 'Bad request'}), 400)
+
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'error': 'Not found'}), 404)
 
 
 class HermesAPI(Resource):
@@ -37,28 +48,25 @@ class HermesAPI(Resource):
         mitie_payload = {'content': args['content'].encode('utf-8')}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
-        mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR'] # get MITIE endpoint
-        mitie_url = 'http://' + mitie_ip + ':5001'
-        try:
-            mitie_r = requests.post(mitie_url, json=mitie_payload) # hit MITIE containter
-        except:
-            mitie_r = {'MITIE request failed'}
+        mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR'] # get MITIE address
+        mitie_url = 'http://{}:{}'.format(mitie_ip, '5001')
+        mitie_r = requests.post(mitie_url, json=mitie_payload).json() # hit MITIE containter
 
         cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
-        cliff_url = "http://{}:{}/CLIFF-2.0.0/parse/text".format(cliff_ip, '8080')
+        cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip, '8080')
         cliff_payload = {'q': args['content'].encode('utf-8')}
-        try:
-            cliff_r = requests.get(cliff_url, params=cliff_payload)
-        except:
-            cliff_r = {'CLIFF request failed'}
+        cliff_r = requests.get(cliff_url, params=cliff_payload).json()
 
-#       topics_ip =
-#       topics_url =
-#       topics_r =
+        topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
+        topics_url = 'http://{}:{}'.format(topics_ip, '5002')
+        topics_payload = {'content': args['content'].encode('utf-8')}
+        topics_r = requests.post(topics_url, json=topics_payload).json()
 
-        return {'MITIE': mitie_r.json(), 'CLIFF': cliff_r.json()}, 201
+        return {'MITIE': mitie_r, 'CLIFF': cliff_r, 'topics': topics_r}, 201
 
 api.add_resource(HermesAPI, '/')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    http_server = HTTPServer(WSGIContainer(app))
+    http_server.listen(5000)
+    IOLoop.instance().start()

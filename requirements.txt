@@ -1,4 +1,5 @@
-requests
+requests==2.4.3
 Flask==0.10.1
 Flask-RESTful==0.3.2
 Flask-HTTPAuth
+tornado==4.1

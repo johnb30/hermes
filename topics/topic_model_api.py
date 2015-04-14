@@ -1,7 +1,16 @@
+#!flask/bin/python
 import json
+from flask import Flask
+from flask.ext.restful import Api, Resource, reqparse
 from gensim import models
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+
+app = Flask(__name__)
+api = Api(app)
 
 stopwords = stopwords.words('english')
 stemmer = PorterStemmer()
@@ -20,30 +29,45 @@ tops_mapping = {13: 'Control', 41: 'ISIL/fighting', 19: 'Syria', 11: 'U.S.',
                 8: 'Jordan/Coalition', 34: 'Misc', 10: 'Kurdish', 0: '?',
                 35: 'Pilot', 17: '?', 42: 'Airstrike'}
 
-model = models.utils.SaveLoad.load('control_model.model')
-dictionary = models.utils.SaveLoad.load('syr_irq_dict.model')
+model = models.utils.SaveLoad.load('/src/control_model.model')
+dictionary = models.utils.SaveLoad.load('/src/syr_irq_dict.model')
 
 
-def get_topics(sentence):
-    content = [stemmer.stem(word) for word in sentence.lower().split() if word
-               not in stopwords]
-    doc = dictionary.doc2bow(content)
-    out = model[doc]
+class TopicsAPI(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('content', type=str, location='json')
+        super(TopicsAPI, self).__init__()
 
-    doc_max = 0.0
-    max_index = ''
-    for top in out:
-        if abs(float(top[1])) > doc_max:
-            doc_max = float(top[1])
-            max_index = top[0]
-    max_top_string = tops_mapping[max_index]
+    def post(self):
+        args = self.reqparse.parse_args()
+        sentence = args['content'].encode('utf-8')
+        content = [stemmer.stem(word) for word in sentence.lower().split() if word
+                not in stopwords]
+        doc = dictionary.doc2bow(content)
+        out = model[doc]
 
-    tops_strings = []
-    for top in out:
-        new_tuple = (tops_mapping[top[0]], top[1])
-        tops_strings.append(new_tuple)
+        doc_max = 0.0
+        max_index = ''
+        for top in out:
+            if abs(float(top[1])) > doc_max:
+                doc_max = float(top[1])
+                max_index = top[0]
+        max_top_string = tops_mapping[max_index]
 
-    to_return = {'topics': out, 'topic_strings': tops_strings,
-                 'highest_topic_index': max_index,
-                 'highest_topic_string': max_top_string}
-    return json.dumps(to_return)
+        tops_strings = []
+        for top in out:
+            new_tuple = (tops_mapping[top[0]], top[1])
+            tops_strings.append(new_tuple)
+
+        to_return = {'topics': out, 'topic_strings': tops_strings,
+                    'highest_topic_index': max_index,
+                    'highest_topic_string': max_top_string}
+        return json.dumps(to_return)
+
+api.add_resource(TopicsAPI, '/')
+
+if __name__ == '__main__':
+    http_server = HTTPServer(WSGIContainer(app))
+    http_server.listen(5002)
+    IOLoop.instance().start()

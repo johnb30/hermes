@@ -9,5 +9,5 @@ RUN git clone https://github.com/mit-nlp/MITIE.git
 RUN cd MITIE; make MITIE-models
 RUN cd MITIE/mitielib; make
 ADD . /src
-EXPOSE  5001
+EXPOSE 5001
 CMD ["python", "/src/mitie_api.py"]

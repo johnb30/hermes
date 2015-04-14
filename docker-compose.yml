@@ -3,9 +3,12 @@ hermes:
   links: 
    - mitie
    - cliff
+   - topics
   ports:
    - "5000:5000"
 mitie:
   build: mitie/.
 cliff:
   build: cliff/.
+topics:
+  build: topics/.

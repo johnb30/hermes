@@ -10,6 +10,9 @@ import re
 import json
 from flask import Flask
 from flask.ext.restful import Api, Resource, reqparse
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
 from mitie import *
 
 app = Flask(__name__)
@@ -67,4 +70,6 @@ class MitieAPI(Resource):
 api.add_resource(MitieAPI, '/')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    http_server = HTTPServer(WSGIContainer(app))
+    http_server.listen(5001)
+    IOLoop.instance().start()
