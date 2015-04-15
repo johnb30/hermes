@@ -62,7 +62,7 @@ class HermesAPI(Resource):
         topics_payload = {'content': args['content'].encode('utf-8')}
         topics_r = requests.post(topics_url, json=topics_payload).json()
 
-        return {'MITIE': mitie_r, 'CLIFF': cliff_r, topics_r}, 201
+        return {'MITIE': mitie_r, 'CLIFF': cliff_r, 'topic_model': topics_r}, 201
 
 api.add_resource(HermesAPI, '/')
 
