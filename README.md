@@ -1,6 +1,6 @@
 # Hermes 
 
-[Hermes Conrad](http://futurama.wikia.com/wiki/Hermes_Conrad) is the unofficial
+[Hermes Conrad](http://futurama.wikia.com/wiki/Hermes_Conrad) is the ~~unofficial~~ official
 mascot of the Hermes API.
 
 ## Services
