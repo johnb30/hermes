@@ -39,10 +39,17 @@ Hermes returns the following fields from each service
         explanatory.
 - **Topic Model**
     - `topic_model`:
-        - `topics`:
-        - `highest_topic_string`:
-        - `highest_topic_index`:
-        - `topic_strings`:
+        - `topics`: Array of arrays that contains the topic index as the first
+          entry in the inner arrays and the topic weighting as the second
+          entry.
+        - `highest_topic_string`: String representation of the topic with the
+          highest weighting for that document.
+        - `highest_topic_index`: Integer representation of the topic with the
+          highest weighting for that document.
+        - `topic_strings`: Array of arrays that contains the string
+          representation of the topic as the first entry in the inner arrays
+          and the topic weighting as the second entry.
+
 
 ## Running
 
@@ -54,7 +61,8 @@ If you're on OS X be sure to set your environment variable correctly using:
 `(boot2docker shellinit)`.
 
 Then its as simple as `sudo docker-compose up`. You can pass it the `-d` flag
-to run it in the background. To test if the api is working you can use cURL:
+to run it in the background. If you want to kill the containers just issue
+`sudo docker-compose kill`. To test if the api is working you can use cURL:
 
 ```bash
 curl -i -u user:text2features -H "Content-Type: application/json" -d
@@ -63,6 +71,19 @@ city Aleppo overnight, killing at least eight people, Syrian state media
 reported. The Syrian Observatory for Human Rights, a UK-based group that tracks the war,
 said eight people were killed in an air strike by government forces in a
 separate, rebel-held part of the city."}' -X POST http://localhost:5000/
+```
+
+To run using the Python `requests` library:
+
+```python
+import json
+import requests
+
+headers = {'Content-Type': 'application/json'}
+data = {"content": "Insurgents bombarded a government-held part of Syria's second city Aleppo overnight, killing at least eight people, Syrian state media reported. The Syrian Observatory for Human Rights, a UK-based group that tracks the war, said eight people were killed in an air strike by government forces in a separate, rebel-held part of the city."}
+data = json.dumps(data)
+out =  = requests.post('http://localhost:5000/', data=data, auth=('user',
+'text2features'), headers=headers)
 ```
 
 If you are on OS X, swap out `localhost` for whatever your boot2docker IP
