@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import os
 import json
 import requests
+import geolocation
 from flask import Flask, jsonify, make_response
 from flask.ext.restful import Api, Resource, reqparse
 from flask.ext.httpauth import HTTPBasicAuth
@@ -14,11 +15,13 @@ app = Flask(__name__)
 api = Api(app)
 auth = HTTPBasicAuth()
 
+
 @auth.get_password
 def get_password(username):
     if username == 'user':
         return 'text2features'
     return None
+
 
 @auth.error_handler
 def unauthorized():
@@ -26,9 +29,11 @@ def unauthorized():
     # default auth dialog
     return make_response(jsonify({'message': 'Unauthorized access'}), 403)
 
+
 @app.errorhandler(400)
 def bad_request(error):
     return make_response(jsonify({'error': 'Bad request'}), 400)
+
 
 @app.errorhandler(404)
 def not_found(error):
@@ -44,23 +49,32 @@ class HermesAPI(Resource):
         super(HermesAPI, self).__init__()
 
     def post(self):
-        args = self.reqparse.parse_args() # setup the request parameters
+        args = self.reqparse.parse_args()  # setup the request parameters
         mitie_payload = {'content': args['content'].encode('utf-8')}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
-        mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR'] # get MITIE address
+        mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR']  # get MITIE address
         mitie_url = 'http://{}:{}'.format(mitie_ip, '5001')
-        mitie_r = requests.post(mitie_url, json=mitie_payload).json() # hit MITIE containter
+        # hit MITIE containter
+        mitie_r = requests.post(mitie_url, json=mitie_payload).json()
 
         cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
-        cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip, '8080')
+        cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
+                                                                 '8080')
         cliff_payload = {'q': args['content'].encode('utf-8')}
-        cliff_r = requests.get(cliff_url, params=cliff_payload).json()
+        cliff_t = requests.get(cliff_url, params=cliff_payload).json()
+        if cliff_t:
+            cliff_r = geolocation.process_cliff(cliff_t)
+        else:
+            cliff_r = cliff_t
 
-        topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
-        topics_url = 'http://{}:{}'.format(topics_ip, '5002')
-        topics_payload = {'content': args['content'].encode('utf-8')}
-        topics_r = requests.post(topics_url, json=topics_payload).json()
+        if 'SYR' in cliff_r['country_vec'] or 'IRQ' in cliff_r['country_vec']:
+            topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
+            topics_url = 'http://{}:{}'.format(topics_ip, '5002')
+            topics_payload = {'content': args['content'].encode('utf-8')}
+            topics_r = requests.post(topics_url, json=topics_payload).json()
+        else:
+            topics_r = json.dumps({})
 
         return {'MITIE': mitie_r, 'CLIFF': cliff_r, 'topic_model': topics_r}, 201
 
