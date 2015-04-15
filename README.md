@@ -1,4 +1,5 @@
-# Hermes
+# Hermes 
+![Logo](http://en.wikipedia.org/wiki/File:FuturamaHermesConrad.png#/media/File:FuturamaHermesConrad.png)
 
 ## Services
 
@@ -39,9 +40,12 @@ Hermes returns the following fields from each service
 
 ## Running
 
-Hermes requires docker-compose, which you can install via `sudo pip install -U
-docker-compose`. If you're on OS X be sure to set your environment variable
-correctly using: `(boot2docker shellinit)`.
+Make sure you have docker installed first. Instructions for Ubuntu can be found
+[here](http://docs.docker.com/installation/ubuntulinux/) and for OS X (via
+boot2docker) [here](https://docs.docker.com/installation/mac/). Hermes requires
+docker-compose, which you can install via `sudo pip install -U docker-compose`.
+If you're on OS X be sure to set your environment variable correctly using:
+`(boot2docker shellinit)`.
 
 Then its as simple as `sudo docker-compose up`. You can pass it the `-d` flag
 to run it in the background. To test if the api is working you can use cURL:
@@ -72,7 +76,7 @@ Server: TornadoServer/4.1
     "html": "\"Insurgents bombarded a government-held part of Syria 's second city Aleppo overnight , killing at least eight people , Syrian state media reported . The Syrian Observatory for <span class=\\\"mitie-ORGANIZATION\\\">Human Rights<\/span> , a UK-based group that tracks the war , said eight people were killed in an air strike by government forces in a separate , rebel-held part of the city .\"",
     "cleaned_tokens": "[\"insurgents\", \"bombarded\", \"governmentheld\", \"part\", \"syria\", \"second\", \"city\", \"aleppo\", \"overnight\", \"killing\", \"least\", \"eight\", \"people\", \"syrian\", \"state\", \"media\", \"reported\", \"syrian\", \"observatory\", \"human\", \"rights\", \"ukbased\", \"group\", \"tracks\", \"war\", \"said\", \"eight\", \"people\", \"were\", \"killed\", \"air\", \"strike\", \"government\", \"forces\", \"separate\", \"rebelheld\", \"part\", \"city\"]"
   },
-  "topics": "{\"topics\": [[3, 0.034243634377867184], [13, 0.46910971927177875], [16, 0.19956133562897088], [37, 0.17131373271406039], [38, 0.1020873674810064]], \"highest_topic_string\": \"Control\", \"highest_topic_index\": 13, \"topic_strings\": [[\"Assad\", 0.034243634377867184], [\"Control\", 0.46910971927177875], [\"Cities\", 0.19956133562897088], [\"Rebels\", 0.17131373271406039], [\"Kobani\", 0.1020873674810064]]}",
+  \"topics\": [[3, 0.034243634377867184], [13, 0.46910971927177875], [16, 0.19956133562897088], [37, 0.17131373271406039], [38, 0.1020873674810064]], \"highest_topic_string\": \"Control\", \"highest_topic_index\": 13, \"topic_strings\": [[\"Assad\", 0.034243634377867184], [\"Control\", 0.46910971927177875], [\"Cities\", 0.19956133562897088], [\"Rebels\", 0.17131373271406039], [\"Kobani\", 0.1020873674810064]],
   "CLIFF": {
     "status": "ok",
     "version": "2.0.0",
