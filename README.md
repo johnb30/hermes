@@ -1,7 +1,7 @@
 # Hermes 
 
 [Hemres Conrad](http://futurama.wikia.com/wiki/Hermes_Conrad) is the unofficial
-mascot of the Herme API.
+mascot of the Hermes API.
 
 ## Services
 
