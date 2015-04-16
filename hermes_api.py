@@ -52,7 +52,10 @@ class HermesAPI(Resource):
 
     def post(self):
         args = self.reqparse.parse_args()  # setup the request parameters
-        mitie_payload = {'content': args['content'].encode('utf-8')}
+        content = args['content'].decode('utf-8')
+        content = content.encode('utf-8')
+
+        mitie_payload = {'content': content}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
         mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR']  # get MITIE address
@@ -63,7 +66,7 @@ class HermesAPI(Resource):
         cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
         cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
                                                                  '8080')
-        cliff_payload = {'q': args['content'].encode('utf-8')}
+        cliff_payload = {'q': content}
         cliff_t = requests.get(cliff_url, params=cliff_payload).json()
         if cliff_t:
             cliff_r = geolocation.process_cliff(cliff_t)
@@ -80,7 +83,7 @@ class HermesAPI(Resource):
 
         stanford_ip = os.environ['STANFORD_PORT_5003_TCP_ADDR']
         server = jsonrpclib.Server('http://' + stanford_ip + ":5003")
-        stanford_r = loads(server.parse(args['content']))
+        stanford_r = loads(server.parse(content))
 
         return {'MITIE': mitie_r, 'CLIFF': cliff_r, 'topic_model': topics_r,
                 'stanford': stanford_r}, 201
