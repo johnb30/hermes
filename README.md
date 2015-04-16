@@ -19,6 +19,13 @@ features in a box). The following services are currently implemented:
 - **Topic Model:** LDA model with 50 topics, implemented in
     [gensim](https://radimrehurek.com/gensim/). Designed for a specific set of
     topics. Only stories geolocated to Iraq or Syria are run through this container.
+- **Stanford CoreNLP:** Natural language processing provided by [Stanford
+    CoreNLP](http://nlp.stanford.edu/software/corenlp.shtml) v3.4.1 and served
+    from the container using
+    [this](https://bitbucket.org/torotoki/corenlp-python/overview) python
+    wrapper by Hiroyoshi Komatsu and Johannes Castner, which is a fork of
+    Dustin Smith's
+    [wrapper](https://github.com/dasmith/stanford-corenlp-python).
 
 ## Fields
 
@@ -54,10 +61,21 @@ Hermes returns the following fields from each service
         - `topic_strings`: Array of arrays that contains the string
           representation of the topic as the first entry in the inner arrays
           and the topic weighting as the second entry.
+- **Stanford CoreNLP**
+    - `stanford`:
+        - `coref`:
+        - `sentences`:
+            - `parsetree`:
+            - `text`:
+            - `dependencies`:
+            - `words`:
+            - `indexeddependnecies`:
+
 
 ## Running
 
-Make sure you have docker installed first. Instructions for Ubuntu can be found
+Make sure you have docker installed first. You can get everything setup using
+the `standup.sh` script in this repo, or do it yourself. Instructions for Ubuntu can be found
 [here](http://docs.docker.com/installation/ubuntulinux/) and for OS X (via
 boot2docker) [here](https://docs.docker.com/installation/mac/). Hermes requires
 docker-compose, which you can install via `sudo pip install -U docker-compose`.
@@ -93,111 +111,1239 @@ The response should look like this:
 ```http
 HTTP/1.1 201 CREATED
 Content-Type: application/json
-Content-Length: 3238
+Content-Length: 15823
 Server: TornadoServer/4.1
 
 {
-  "MITIE": {
-    "entities": "[{\"start\": 6, \"entity_text\": \"Syria\", \"tag\": \"LOCATION\", \"stop\": 7, \"score\": 1.1885840007455295}, {\"start\": 10, \"entity_text\": \"Aleppo\", \"tag\": \"LOCATION\", \"stop\": 11, \"score\": 0.6466367651771303}, {\"start\": 19, \"entity_text\": \"Syrian\", \"tag\": \"MISC\", \"stop\": 20, \"score\": 1.1922037730890405}, {\"start\": 28, \"entity_text\": \"Human Rights\", \"tag\": \"ORGANIZATION\", \"stop\": 30, \"score\": 0.6246598122395554}, {\"start\": 32, \"entity_text\": \"UK-based\", \"tag\": \"MISC\", \"stop\": 33, \"score\": 1.3681621776612611}]",
-    "html": "\"Insurgents bombarded a government-held part of Syria 's second city Aleppo overnight , killing at least eight people , Syrian state media reported . The Syrian Observatory for <span class=\\\"mitie-ORGANIZATION\\\">Human Rights<\/span> , a UK-based group that tracks the war , said eight people were killed in an air strike by government forces in a separate , rebel-held part of the city .\"",
-    "cleaned_tokens": "[\"insurgents\", \"bombarded\", \"governmentheld\", \"part\", \"syria\", \"second\", \"city\", \"aleppo\", \"overnight\", \"killing\", \"least\", \"eight\", \"people\", \"syrian\", \"state\", \"media\", \"reported\", \"syrian\", \"observatory\", \"human\", \"rights\", \"ukbased\", \"group\", \"tracks\", \"war\", \"said\", \"eight\", \"people\", \"were\", \"killed\", \"air\", \"strike\", \"government\", \"forces\", \"separate\", \"rebelheld\", \"part\", \"city\"]"
-  },
-  "topic_model": "{\"topics\": [[3, 0.034243634377867184], [13, 0.46910971927177875], [16, 0.19956133562897088], [37, 0.17131373271406039], [38, 0.1020873674810064]], \"highest_topic_string\": \"Control\", \"highest_topic_index\": 13, \"topic_strings\": [[\"Assad\", 0.034243634377867184], [\"Control\", 0.46910971927177875], [\"Cities\", 0.19956133562897088], [\"Rebels\", 0.17131373271406039], [\"Kobani\", 0.1020873674810064]]}",
-  "CLIFF": {
-    "status": "ok",
-    "version": "2.0.0",
-    "results": {
-      "organizations": [
-        {
-          "count": 1,
-          "name": "Syrian Observatory for Human Rights"
-        }
+   "MITIE":{
+      "entities":"[{\"start\": 6, \"entity_text\": \"Syria\", \"tag\": \"LOCATION\", \"stop\": 7, \"score\": 1.1885840007455295}, {\"start\": 10, \"entity_text\": \"Aleppo\", \"tag\": \"LOCATION\", \"stop\": 11, \"score\": 0.6466367651771303}, {\"start\": 19, \"entity_text\": \"Syrian\", \"tag\": \"MISC\", \"stop\": 20, \"score\": 1.1922037730890405}, {\"start\": 28, \"entity_text\": \"Human Rights\", \"tag\": \"ORGANIZATION\", \"stop\": 30, \"score\": 0.6246598122395554}, {\"start\": 32, \"entity_text\": \"UK-based\", \"tag\": \"MISC\", \"stop\": 33, \"score\": 1.3681621776612611}]",
+      "html":"\"Insurgents bombarded a government-held part of Syria 's second city Aleppo overnight , killing at least eight people , Syrian state media reported . The Syrian Observatory for <span class=\\\"mitie-ORGANIZATION\\\">Human Rights</span> , a UK-based group that tracks the war , said eight people were killed in an air strike by government forces in a separate , rebel-held part of the city .\"",
+      "cleaned_tokens":"[\"insurgents\", \"bombarded\", \"governmentheld\", \"part\", \"syria\", \"second\", \"city\", \"aleppo\", \"overnight\", \"killing\", \"least\", \"eight\", \"people\", \"syrian\", \"state\", \"media\", \"reported\", \"syrian\", \"observatory\", \"human\", \"rights\", \"ukbased\", \"group\", \"tracks\", \"war\", \"said\", \"eight\", \"people\", \"were\", \"killed\", \"air\", \"strike\", \"government\", \"forces\", \"separate\", \"rebelheld\", \"part\", \"city\"]"
+   },
+   "stanford":{
+      "coref":[
+         [
+            [
+               [
+                  "eight",
+                  1,
+                  16,
+                  16,
+                  17
+               ],
+               [
+                  "eight",
+                  0,
+                  16,
+                  16,
+                  17
+               ]
+            ]
+         ],
+         [
+            [
+               [
+                  "the city",
+                  1,
+                  35,
+                  34,
+                  36
+               ],
+               [
+                  "Syria 's second city Aleppo overnight",
+                  0,
+                  9,
+                  6,
+                  12
+               ]
+            ]
+         ],
+         [
+            [
+               [
+                  "eight people",
+                  1,
+                  17,
+                  16,
+                  18
+               ],
+               [
+                  "at least eight people",
+                  0,
+                  17,
+                  14,
+                  18
+               ]
+            ]
+         ],
+         [
+            [
+               [
+                  "a UK-based group that tracks the war",
+                  1,
+                  9,
+                  7,
+                  14
+               ],
+               [
+                  "The Syrian Observatory for Human Rights",
+                  1,
+                  2,
+                  0,
+                  6
+               ]
+            ]
+         ]
       ],
-      "places": {
-        "mentions": [
-          {
-            "confidence": 1,
-            "name": "Syrian Arab Republic",
-            "countryCode": "SY",
-            "featureCode": "PCLI",
-            "lon": 38,
-            "source": {
-              "charIndex": 47,
-              "string": "Syria"
-            },
-            "stateCode": "00",
-            "featureClass": "A",
-            "lat": 35,
-            "id": 163843,
-            "population": 22198110
-          },
-          {
-            "confidence": 1,
-            "name": "Aleppo",
-            "countryCode": "SY",
-            "featureCode": "PPLA",
-            "lon": 37.16117,
-            "source": {
-              "charIndex": 67,
-              "string": "Aleppo"
-            },
-            "stateCode": "09",
-            "featureClass": "P",
-            "lat": 36.20124,
-            "id": 170063,
-            "population": 1602264
-          }
-        ],
-        "focus": {
-          "states": [
-            {
-              "name": "Aleppo Governorate",
-              "countryCode": "SY",
-              "featureCode": "ADM1",
-              "lon": 37.61667,
-              "score": 1,
-              "stateCode": "09",
-              "featureClass": "A",
-              "lat": 36.25,
-              "id": 170062,
-              "population": 3115559
-            }
-          ],
-          "cities": [
-            {
-              "name": "Aleppo",
-              "countryCode": "SY",
-              "featureCode": "PPLA",
-              "lon": 37.16117,
-              "score": 1,
-              "stateCode": "09",
-              "featureClass": "P",
-              "lat": 36.20124,
-              "id": 170063,
-              "population": 1602264
-            }
-          ],
-          "countries": [
-            {
-              "name": "Syrian Arab Republic",
-              "countryCode": "SY",
-              "featureCode": "PCLI",
-              "lon": 38,
-              "score": 2,
-              "stateCode": "00",
-              "featureClass": "A",
-              "lat": 35,
-              "id": 163843,
-              "population": 22198110
-            }
-          ]
-        }
-      },
-      "people": [
-        
+      "sentences":[
+         {
+            "parsetree":"(ROOT (S (S (NP (NNS Insurgents)) (VP (VBD bombarded) (NP (NP (DT a) (JJ government-held) (NN part)) (PP (IN of) (NP (NP (NP (NNP Syria) (POS 's)) (JJ second) (NN city)) (NP-TMP (NP (NNP Aleppo)) (ADVP (RB overnight)))))) (, ,) (S (VP (VBG killing) (NP (QP (IN at) (JJS least) (CD eight)) (NNS people)))))) (, ,) (NP (JJ Syrian) (NN state) (NNS media)) (VP (VBD reported)) (. .)))",
+            "text":"Insurgents bombarded a government-held part of Syria's second city Aleppo overnight, killing at least eight people, Syrian state media reported.",
+            "dependencies":[
+               [
+                  "root",
+                  "ROOT",
+                  "reported"
+               ],
+               [
+                  "nsubj",
+                  "bombarded",
+                  "Insurgents"
+               ],
+               [
+                  "ccomp",
+                  "reported",
+                  "bombarded"
+               ],
+               [
+                  "det",
+                  "part",
+                  "a"
+               ],
+               [
+                  "amod",
+                  "part",
+                  "government-held"
+               ],
+               [
+                  "dobj",
+                  "bombarded",
+                  "part"
+               ],
+               [
+                  "poss",
+                  "city",
+                  "Syria"
+               ],
+               [
+                  "amod",
+                  "city",
+                  "second"
+               ],
+               [
+                  "prep_of",
+                  "part",
+                  "city"
+               ],
+               [
+                  "tmod",
+                  "city",
+                  "Aleppo"
+               ],
+               [
+                  "advmod",
+                  "Aleppo",
+                  "overnight"
+               ],
+               [
+                  "vmod",
+                  "bombarded",
+                  "killing"
+               ],
+               [
+                  "quantmod",
+                  "eight",
+                  "at"
+               ],
+               [
+                  "mwe",
+                  "at",
+                  "least"
+               ],
+               [
+                  "num",
+                  "people",
+                  "eight"
+               ],
+               [
+                  "dobj",
+                  "killing",
+                  "people"
+               ],
+               [
+                  "amod",
+                  "media",
+                  "Syrian"
+               ],
+               [
+                  "nn",
+                  "media",
+                  "state"
+               ],
+               [
+                  "nsubj",
+                  "reported",
+                  "media"
+               ]
+            ],
+            "words":[
+               [
+                  "Insurgents",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"10",
+                     "CharacterOffsetBegin":"0",
+                     "PartOfSpeech":"NNS",
+                     "Lemma":"insurgent"
+                  }
+               ],
+               [
+                  "bombarded",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"20",
+                     "CharacterOffsetBegin":"11",
+                     "PartOfSpeech":"VBD",
+                     "Lemma":"bombard"
+                  }
+               ],
+               [
+                  "a",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"22",
+                     "CharacterOffsetBegin":"21",
+                     "PartOfSpeech":"DT",
+                     "Lemma":"a"
+                  }
+               ],
+               [
+                  "government-held",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"38",
+                     "CharacterOffsetBegin":"23",
+                     "PartOfSpeech":"JJ",
+                     "Lemma":"government-held"
+                  }
+               ],
+               [
+                  "part",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"43",
+                     "CharacterOffsetBegin":"39",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"part"
+                  }
+               ],
+               [
+                  "of",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"46",
+                     "CharacterOffsetBegin":"44",
+                     "PartOfSpeech":"IN",
+                     "Lemma":"of"
+                  }
+               ],
+               [
+                  "Syria",
+                  {
+                     "NamedEntityTag":"LOCATION",
+                     "CharacterOffsetEnd":"52",
+                     "CharacterOffsetBegin":"47",
+                     "PartOfSpeech":"NNP",
+                     "Lemma":"Syria"
+                  }
+               ],
+               [
+                  "'s",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"54",
+                     "CharacterOffsetBegin":"52",
+                     "PartOfSpeech":"POS",
+                     "Lemma":"'s"
+                  }
+               ],
+               [
+                  "second",
+                  {
+                     "NormalizedNamedEntityTag":"2.0",
+                     "Lemma":"second",
+                     "CharacterOffsetEnd":"61",
+                     "PartOfSpeech":"JJ",
+                     "CharacterOffsetBegin":"55",
+                     "NamedEntityTag":"ORDINAL"
+                  }
+               ],
+               [
+                  "city",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"66",
+                     "CharacterOffsetBegin":"62",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"city"
+                  }
+               ],
+               [
+                  "Aleppo",
+                  {
+                     "NamedEntityTag":"LOCATION",
+                     "CharacterOffsetEnd":"73",
+                     "CharacterOffsetBegin":"67",
+                     "PartOfSpeech":"NNP",
+                     "Lemma":"Aleppo"
+                  }
+               ],
+               [
+                  "overnight",
+                  {
+                     "NormalizedNamedEntityTag":"TNI",
+                     "Timex":"<TIMEX3 tid=\"t1\" type=\"TIME\" value=\"TNI\">overnight</TIMEX3>",
+                     "Lemma":"overnight",
+                     "CharacterOffsetEnd":"83",
+                     "PartOfSpeech":"RB",
+                     "CharacterOffsetBegin":"74",
+                     "NamedEntityTag":"TIME"
+                  }
+               ],
+               [
+                  ",",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"84",
+                     "CharacterOffsetBegin":"83",
+                     "PartOfSpeech":",",
+                     "Lemma":","
+                  }
+               ],
+               [
+                  "killing",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"92",
+                     "CharacterOffsetBegin":"85",
+                     "PartOfSpeech":"VBG",
+                     "Lemma":"kill"
+                  }
+               ],
+               [
+                  "at",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"95",
+                     "CharacterOffsetBegin":"93",
+                     "PartOfSpeech":"IN",
+                     "Lemma":"at"
+                  }
+               ],
+               [
+                  "least",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"101",
+                     "CharacterOffsetBegin":"96",
+                     "PartOfSpeech":"JJS",
+                     "Lemma":"least"
+                  }
+               ],
+               [
+                  "eight",
+                  {
+                     "":"8.0",
+                     "NormalizedNamedEntityTag":">",
+                     "Lemma":"eight",
+                     "CharacterOffsetEnd":"107",
+                     "PartOfSpeech":"CD",
+                     "CharacterOffsetBegin":"102",
+                     "NamedEntityTag":"NUMBER"
+                  }
+               ],
+               [
+                  "people",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"114",
+                     "CharacterOffsetBegin":"108",
+                     "PartOfSpeech":"NNS",
+                     "Lemma":"people"
+                  }
+               ],
+               [
+                  ",",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"115",
+                     "CharacterOffsetBegin":"114",
+                     "PartOfSpeech":",",
+                     "Lemma":","
+                  }
+               ],
+               [
+                  "Syrian",
+                  {
+                     "NamedEntityTag":"MISC",
+                     "CharacterOffsetEnd":"122",
+                     "CharacterOffsetBegin":"116",
+                     "PartOfSpeech":"JJ",
+                     "Lemma":"syrian"
+                  }
+               ],
+               [
+                  "state",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"128",
+                     "CharacterOffsetBegin":"123",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"state"
+                  }
+               ],
+               [
+                  "media",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"134",
+                     "CharacterOffsetBegin":"129",
+                     "PartOfSpeech":"NNS",
+                     "Lemma":"media"
+                  }
+               ],
+               [
+                  "reported",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"143",
+                     "CharacterOffsetBegin":"135",
+                     "PartOfSpeech":"VBD",
+                     "Lemma":"report"
+                  }
+               ],
+               [
+                  ".",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"144",
+                     "CharacterOffsetBegin":"143",
+                     "PartOfSpeech":".",
+                     "Lemma":"."
+                  }
+               ]
+            ],
+            "indexeddependencies":[
+               [
+                  "root",
+                  "ROOT-0",
+                  "reported-23"
+               ],
+               [
+                  "nsubj",
+                  "bombarded-2",
+                  "Insurgents-1"
+               ],
+               [
+                  "ccomp",
+                  "reported-23",
+                  "bombarded-2"
+               ],
+               [
+                  "det",
+                  "part-5",
+                  "a-3"
+               ],
+               [
+                  "amod",
+                  "part-5",
+                  "government-held-4"
+               ],
+               [
+                  "dobj",
+                  "bombarded-2",
+                  "part-5"
+               ],
+               [
+                  "poss",
+                  "city-10",
+                  "Syria-7"
+               ],
+               [
+                  "amod",
+                  "city-10",
+                  "second-9"
+               ],
+               [
+                  "prep_of",
+                  "part-5",
+                  "city-10"
+               ],
+               [
+                  "tmod",
+                  "city-10",
+                  "Aleppo-11"
+               ],
+               [
+                  "advmod",
+                  "Aleppo-11",
+                  "overnight-12"
+               ],
+               [
+                  "vmod",
+                  "bombarded-2",
+                  "killing-14"
+               ],
+               [
+                  "quantmod",
+                  "eight-17",
+                  "at-15"
+               ],
+               [
+                  "mwe",
+                  "at-15",
+                  "least-16"
+               ],
+               [
+                  "num",
+                  "people-18",
+                  "eight-17"
+               ],
+               [
+                  "dobj",
+                  "killing-14",
+                  "people-18"
+               ],
+               [
+                  "amod",
+                  "media-22",
+                  "Syrian-20"
+               ],
+               [
+                  "nn",
+                  "media-22",
+                  "state-21"
+               ],
+               [
+                  "nsubj",
+                  "reported-23",
+                  "media-22"
+               ]
+            ]
+         },
+         {
+            "parsetree":"(ROOT (S (NP (NP (NP (DT The) (JJ Syrian) (NN Observatory)) (PP (IN for) (NP (JJ Human) (NNS Rights)))) (, ,) (NP (NP (DT a) (JJ UK-based) (NN group)) (SBAR (WHNP (WDT that)) (S (VP (VBZ tracks) (NP (DT the) (NN war)))))) (, ,)) (VP (VBD said) (SBAR (S (NP (CD eight) (NNS people)) (VP (VBD were) (VP (VBN killed) (PP (IN in) (NP (DT an) (NN air) (NN strike))) (PP (IN by) (NP (NP (NN government) (NNS forces)) (PP (IN in) (NP (NP (DT a) (JJ separate) (, ,) (JJ rebel-held) (NN part)) (PP (IN of) (NP (DT the) (NN city)))))))))))) (. .)))",
+            "text":"The Syrian Observatory for Human Rights, a UK-based group that tracks the war, said eight people were killed in an air strike by government forces in a separate, rebel-held part of the city.",
+            "dependencies":[
+               [
+                  "root",
+                  "ROOT",
+                  "said"
+               ],
+               [
+                  "det",
+                  "Observatory",
+                  "The"
+               ],
+               [
+                  "amod",
+                  "Observatory",
+                  "Syrian"
+               ],
+               [
+                  "nsubj",
+                  "said",
+                  "Observatory"
+               ],
+               [
+                  "amod",
+                  "Rights",
+                  "Human"
+               ],
+               [
+                  "prep_for",
+                  "Observatory",
+                  "Rights"
+               ],
+               [
+                  "det",
+                  "group",
+                  "a"
+               ],
+               [
+                  "amod",
+                  "group",
+                  "UK-based"
+               ],
+               [
+                  "appos",
+                  "Observatory",
+                  "group"
+               ],
+               [
+                  "nsubj",
+                  "tracks",
+                  "that"
+               ],
+               [
+                  "rcmod",
+                  "group",
+                  "tracks"
+               ],
+               [
+                  "det",
+                  "war",
+                  "the"
+               ],
+               [
+                  "dobj",
+                  "tracks",
+                  "war"
+               ],
+               [
+                  "num",
+                  "people",
+                  "eight"
+               ],
+               [
+                  "nsubjpass",
+                  "killed",
+                  "people"
+               ],
+               [
+                  "auxpass",
+                  "killed",
+                  "were"
+               ],
+               [
+                  "ccomp",
+                  "said",
+                  "killed"
+               ],
+               [
+                  "det",
+                  "strike",
+                  "an"
+               ],
+               [
+                  "nn",
+                  "strike",
+                  "air"
+               ],
+               [
+                  "prep_in",
+                  "killed",
+                  "strike"
+               ],
+               [
+                  "nn",
+                  "forces",
+                  "government"
+               ],
+               [
+                  "agent",
+                  "killed",
+                  "forces"
+               ],
+               [
+                  "det",
+                  "part",
+                  "a"
+               ],
+               [
+                  "amod",
+                  "part",
+                  "separate"
+               ],
+               [
+                  "amod",
+                  "part",
+                  "rebel-held"
+               ],
+               [
+                  "prep_in",
+                  "forces",
+                  "part"
+               ],
+               [
+                  "det",
+                  "city",
+                  "the"
+               ],
+               [
+                  "prep_of",
+                  "part",
+                  "city"
+               ]
+            ],
+            "words":[
+               [
+                  "The",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"148",
+                     "CharacterOffsetBegin":"145",
+                     "PartOfSpeech":"DT",
+                     "Lemma":"the"
+                  }
+               ],
+               [
+                  "Syrian",
+                  {
+                     "NamedEntityTag":"ORGANIZATION",
+                     "CharacterOffsetEnd":"155",
+                     "CharacterOffsetBegin":"149",
+                     "PartOfSpeech":"JJ",
+                     "Lemma":"syrian"
+                  }
+               ],
+               [
+                  "Observatory",
+                  {
+                     "NamedEntityTag":"ORGANIZATION",
+                     "CharacterOffsetEnd":"167",
+                     "CharacterOffsetBegin":"156",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"observatory"
+                  }
+               ],
+               [
+                  "for",
+                  {
+                     "NamedEntityTag":"ORGANIZATION",
+                     "CharacterOffsetEnd":"171",
+                     "CharacterOffsetBegin":"168",
+                     "PartOfSpeech":"IN",
+                     "Lemma":"for"
+                  }
+               ],
+               [
+                  "Human",
+                  {
+                     "NamedEntityTag":"ORGANIZATION",
+                     "CharacterOffsetEnd":"177",
+                     "CharacterOffsetBegin":"172",
+                     "PartOfSpeech":"JJ",
+                     "Lemma":"human"
+                  }
+               ],
+               [
+                  "Rights",
+                  {
+                     "NamedEntityTag":"ORGANIZATION",
+                     "CharacterOffsetEnd":"184",
+                     "CharacterOffsetBegin":"178",
+                     "PartOfSpeech":"NNS",
+                     "Lemma":"rights"
+                  }
+               ],
+               [
+                  ",",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"185",
+                     "CharacterOffsetBegin":"184",
+                     "PartOfSpeech":",",
+                     "Lemma":","
+                  }
+               ],
+               [
+                  "a",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"187",
+                     "CharacterOffsetBegin":"186",
+                     "PartOfSpeech":"DT",
+                     "Lemma":"a"
+                  }
+               ],
+               [
+                  "UK-based",
+                  {
+                     "NamedEntityTag":"MISC",
+                     "CharacterOffsetEnd":"196",
+                     "CharacterOffsetBegin":"188",
+                     "PartOfSpeech":"JJ",
+                     "Lemma":"uk-based"
+                  }
+               ],
+               [
+                  "group",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"202",
+                     "CharacterOffsetBegin":"197",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"group"
+                  }
+               ],
+               [
+                  "that",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"207",
+                     "CharacterOffsetBegin":"203",
+                     "PartOfSpeech":"WDT",
+                     "Lemma":"that"
+                  }
+               ],
+               [
+                  "tracks",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"214",
+                     "CharacterOffsetBegin":"208",
+                     "PartOfSpeech":"VBZ",
+                     "Lemma":"track"
+                  }
+               ],
+               [
+                  "the",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"218",
+                     "CharacterOffsetBegin":"215",
+                     "PartOfSpeech":"DT",
+                     "Lemma":"the"
+                  }
+               ],
+               [
+                  "war",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"222",
+                     "CharacterOffsetBegin":"219",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"war"
+                  }
+               ],
+               [
+                  ",",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"223",
+                     "CharacterOffsetBegin":"222",
+                     "PartOfSpeech":",",
+                     "Lemma":","
+                  }
+               ],
+               [
+                  "said",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"228",
+                     "CharacterOffsetBegin":"224",
+                     "PartOfSpeech":"VBD",
+                     "Lemma":"say"
+                  }
+               ],
+               [
+                  "eight",
+                  {
+                     "NormalizedNamedEntityTag":"8.0",
+                     "Lemma":"eight",
+                     "CharacterOffsetEnd":"234",
+                     "PartOfSpeech":"CD",
+                     "CharacterOffsetBegin":"229",
+                     "NamedEntityTag":"NUMBER"
+                  }
+               ],
+               [
+                  "people",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"241",
+                     "CharacterOffsetBegin":"235",
+                     "PartOfSpeech":"NNS",
+                     "Lemma":"people"
+                  }
+               ],
+               [
+                  "were",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"246",
+                     "CharacterOffsetBegin":"242",
+                     "PartOfSpeech":"VBD",
+                     "Lemma":"be"
+                  }
+               ],
+               [
+                  "killed",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"253",
+                     "CharacterOffsetBegin":"247",
+                     "PartOfSpeech":"VBN",
+                     "Lemma":"kill"
+                  }
+               ],
+               [
+                  "in",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"256",
+                     "CharacterOffsetBegin":"254",
+                     "PartOfSpeech":"IN",
+                     "Lemma":"in"
+                  }
+               ],
+               [
+                  "an",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"259",
+                     "CharacterOffsetBegin":"257",
+                     "PartOfSpeech":"DT",
+                     "Lemma":"a"
+                  }
+               ],
+               [
+                  "air",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"263",
+                     "CharacterOffsetBegin":"260",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"air"
+                  }
+               ],
+               [
+                  "strike",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"270",
+                     "CharacterOffsetBegin":"264",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"strike"
+                  }
+               ],
+               [
+                  "by",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"273",
+                     "CharacterOffsetBegin":"271",
+                     "PartOfSpeech":"IN",
+                     "Lemma":"by"
+                  }
+               ],
+               [
+                  "government",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"284",
+                     "CharacterOffsetBegin":"274",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"government"
+                  }
+               ],
+               [
+                  "forces",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"291",
+                     "CharacterOffsetBegin":"285",
+                     "PartOfSpeech":"NNS",
+                     "Lemma":"force"
+                  }
+               ],
+               [
+                  "in",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"294",
+                     "CharacterOffsetBegin":"292",
+                     "PartOfSpeech":"IN",
+                     "Lemma":"in"
+                  }
+               ],
+               [
+                  "a",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"296",
+                     "CharacterOffsetBegin":"295",
+                     "PartOfSpeech":"DT",
+                     "Lemma":"a"
+                  }
+               ],
+               [
+                  "separate",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"305",
+                     "CharacterOffsetBegin":"297",
+                     "PartOfSpeech":"JJ",
+                     "Lemma":"separate"
+                  }
+               ],
+               [
+                  ",",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"306",
+                     "CharacterOffsetBegin":"305",
+                     "PartOfSpeech":",",
+                     "Lemma":","
+                  }
+               ],
+               [
+                  "rebel-held",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"317",
+                     "CharacterOffsetBegin":"307",
+                     "PartOfSpeech":"JJ",
+                     "Lemma":"rebel-held"
+                  }
+               ],
+               [
+                  "part",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"322",
+                     "CharacterOffsetBegin":"318",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"part"
+                  }
+               ],
+               [
+                  "of",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"325",
+                     "CharacterOffsetBegin":"323",
+                     "PartOfSpeech":"IN",
+                     "Lemma":"of"
+                  }
+               ],
+               [
+                  "the",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"329",
+                     "CharacterOffsetBegin":"326",
+                     "PartOfSpeech":"DT",
+                     "Lemma":"the"
+                  }
+               ],
+               [
+                  "city",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"334",
+                     "CharacterOffsetBegin":"330",
+                     "PartOfSpeech":"NN",
+                     "Lemma":"city"
+                  }
+               ],
+               [
+                  ".",
+                  {
+                     "NamedEntityTag":"O",
+                     "CharacterOffsetEnd":"335",
+                     "CharacterOffsetBegin":"334",
+                     "PartOfSpeech":".",
+                     "Lemma":"."
+                  }
+               ]
+            ],
+            "indexeddependencies":[
+               [
+                  "root",
+                  "ROOT-0",
+                  "said-16"
+               ],
+               [
+                  "det",
+                  "Observatory-3",
+                  "The-1"
+               ],
+               [
+                  "amod",
+                  "Observatory-3",
+                  "Syrian-2"
+               ],
+               [
+                  "nsubj",
+                  "said-16",
+                  "Observatory-3"
+               ],
+               [
+                  "amod",
+                  "Rights-6",
+                  "Human-5"
+               ],
+               [
+                  "prep_for",
+                  "Observatory-3",
+                  "Rights-6"
+               ],
+               [
+                  "det",
+                  "group-10",
+                  "a-8"
+               ],
+               [
+                  "amod",
+                  "group-10",
+                  "UK-based-9"
+               ],
+               [
+                  "appos",
+                  "Observatory-3",
+                  "group-10"
+               ],
+               [
+                  "nsubj",
+                  "tracks-12",
+                  "that-11"
+               ],
+               [
+                  "rcmod",
+                  "group-10",
+                  "tracks-12"
+               ],
+               [
+                  "det",
+                  "war-14",
+                  "the-13"
+               ],
+               [
+                  "dobj",
+                  "tracks-12",
+                  "war-14"
+               ],
+               [
+                  "num",
+                  "people-18",
+                  "eight-17"
+               ],
+               [
+                  "nsubjpass",
+                  "killed-20",
+                  "people-18"
+               ],
+               [
+                  "auxpass",
+                  "killed-20",
+                  "were-19"
+               ],
+               [
+                  "ccomp",
+                  "said-16",
+                  "killed-20"
+               ],
+               [
+                  "det",
+                  "strike-24",
+                  "an-22"
+               ],
+               [
+                  "nn",
+                  "strike-24",
+                  "air-23"
+               ],
+               [
+                  "prep_in",
+                  "killed-20",
+                  "strike-24"
+               ],
+               [
+                  "nn",
+                  "forces-27",
+                  "government-26"
+               ],
+               [
+                  "agent",
+                  "killed-20",
+                  "forces-27"
+               ],
+               [
+                  "det",
+                  "part-33",
+                  "a-29"
+               ],
+               [
+                  "amod",
+                  "part-33",
+                  "separate-30"
+               ],
+               [
+                  "amod",
+                  "part-33",
+                  "rebel-held-32"
+               ],
+               [
+                  "prep_in",
+                  "forces-27",
+                  "part-33"
+               ],
+               [
+                  "det",
+                  "city-36",
+                  "the-35"
+               ],
+               [
+                  "prep_of",
+                  "part-33",
+                  "city-36"
+               ]
+            ]
+         }
       ]
-    },
-    "milliseconds": 38
-  }
+   },
+   "topic_model":"{\"topics\": [[3, 0.034247643930892024], [13, 0.46920064872232281], [16, 0.19961466016027393], [37, 0.17151357983226331], [38, 0.10173925682793149]], \"highest_topic_string\": \"Control\", \"highest_topic_index\": 13, \"topic_strings\": [[\"Assad\", 0.034247643930892024], [\"Control\", 0.46920064872232281], [\"Cities\", 0.19961466016027393], [\"Rebels\", 0.17151357983226331], [\"Kobani\", 0.10173925682793149]]}",
+   "CLIFF":{
+      "focus_countries":[
+         {
+            "lat":35.0,
+            "lon":38.0,
+            "name":"Syrian Arab Republic",
+            "countryCode":"SYR"
+         }
+      ],
+      "cliff_orgs":[
+         "Syrian Observatory for Human Rights"
+      ],
+      "focus_cities":[
+         {
+            "lat":36.20124,
+            "stateName":"Aleppo Governorate",
+            "lon":37.16117,
+            "name":"Aleppo",
+            "countryCode":"SYR"
+         }
+      ],
+      "country_vec":[
+         "SYR"
+      ],
+      "cliff_people":[
+
+      ],
+      "focus_states":[
+         {
+            "lat":36.25,
+            "lon":37.61667,
+            "name":"Aleppo Governorate",
+            "countryCode":"SYR",
+            "stateCode":"09"
+         }
+      ],
+      "stateVec":[
+         "Aleppo Governorate"
+      ]
+   }
 }
 ```
