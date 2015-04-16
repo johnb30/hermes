@@ -4,6 +4,8 @@ import os
 import json
 import requests
 import geolocation
+import jsonrpclib
+from simplejson import loads
 from flask import Flask, jsonify, make_response
 from flask.ext.restful import Api, Resource, reqparse
 from flask.ext.httpauth import HTTPBasicAuth
@@ -76,7 +78,12 @@ class HermesAPI(Resource):
         else:
             topics_r = json.dumps({})
 
-        return {'MITIE': mitie_r, 'CLIFF': cliff_r, 'topic_model': topics_r}, 201
+        stanford_ip = os.environ['STANFORD_PORT_5003_TCP_ADDR']
+        server = jsonrpclib.Server('http://' + stanford_ip + ":5003")
+        stanford_r = loads(server.parse(args['content']))
+
+        return {'MITIE': mitie_r, 'CLIFF': cliff_r, 'topic_model': topics_r,
+                'stanford': stanford_r}, 201
 
 api.add_resource(HermesAPI, '/')
 
