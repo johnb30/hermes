@@ -4,6 +4,7 @@ hermes:
    - mitie
    - cliff
    - topics
+   - stanford
   ports:
    - "5000:5000"
 mitie:
@@ -12,3 +13,5 @@ cliff:
   build: cliff/.
 topics:
   build: topics/.
+stanford:
+  build: stanford/.
