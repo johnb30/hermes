@@ -10,11 +10,13 @@ import re
 import json
 from flask import Flask
 from flask.ext.restful import Api, Resource, reqparse
+from flask.ext.restful.representations.json import output_json
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from mitie import *
 
+output_json.func_globals['settings'] = {'ensure_ascii': False, 'encoding':'utf8'}
 app = Flask(__name__)
 api = Api(app)
 
@@ -24,7 +26,7 @@ ner = named_entity_extractor('/MITIE/MITIE-models/english/ner_model.dat')
 class MitieAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('content', type=str, location='json')
+        self.reqparse.add_argument('content', type=unicode, location='json')
         super(MitieAPI, self).__init__()
 
     def post(self):

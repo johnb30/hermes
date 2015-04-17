@@ -9,9 +9,12 @@ from simplejson import loads
 from flask import Flask, jsonify, make_response
 from flask.ext.restful import Api, Resource, reqparse
 from flask.ext.httpauth import HTTPBasicAuth
+from flask.ext.restful.representations.json import output_json
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
+
+output_json.func_globals['settings'] = {'ensure_ascii': False, 'encoding':'utf8'}
 
 app = Flask(__name__)
 api = Api(app)
@@ -47,12 +50,12 @@ class HermesAPI(Resource):
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('content', type=str, location='json')
+        self.reqparse.add_argument('content', type=unicode, location='json')
         super(HermesAPI, self).__init__()
 
     def post(self):
         args = self.reqparse.parse_args()  # setup the request parameters
-        mitie_payload = {'content': args['content'].encode('utf-8')}
+        mitie_payload = {'content': args['content'] #.encode('utf-8')}
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
         mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR']  # get MITIE address
@@ -63,7 +66,7 @@ class HermesAPI(Resource):
         cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
         cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
                                                                  '8080')
-        cliff_payload = {'q': args['content'].encode('utf-8')}
+        cliff_payload = {'q': args['content'] #.encode('utf-8')}
         cliff_t = requests.get(cliff_url, params=cliff_payload).json()
         if cliff_t:
             cliff_r = geolocation.process_cliff(cliff_t)
@@ -73,7 +76,7 @@ class HermesAPI(Resource):
         if 'SYR' in cliff_r['country_vec'] or 'IRQ' in cliff_r['country_vec']:
             topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
             topics_url = 'http://{}:{}'.format(topics_ip, '5002')
-            topics_payload = {'content': args['content'].encode('utf-8')}
+            topics_payload = {'content': args['content'] #.encode('utf-8')}
             topics_r = requests.post(topics_url, json=topics_payload).json()
         else:
             topics_r = json.dumps({})
