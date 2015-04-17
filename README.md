@@ -87,8 +87,7 @@ to run the process in the background. If you want to kill the containers just is
 `sudo docker-compose kill`. To test if the api is working you can use cURL:
 
 ```bash
-curl -i -u user:text2features -H "Content-Type: application/json" -d
-'{"content": "Insurgents bombarded a government-held part of Syria'"'"'s second city Aleppo overnight, killing at least eight people, Syrian state media reported. The Syrian Observatory for Human Rights, a UK-based group that tracks the war, said eight people were killed in an air strike by government forces in a separate, rebel-held part of the city."}' -X POST http://localhost:5000/
+curl -i -u user:text2features -H "Content-Type: application/json" -d '{"content": "Insurgents bombarded a government-held part of Syria'"'"'s second city Aleppo overnight, killing at least eight people, Syrian state media reported. The Syrian Observatory for Human Rights, a UK-based group that tracks the war, said eight people were killed in an air strike by government forces in a separate, rebel-held part of the city."}' -X POST http://localhost:5000/
 ```
 
 To run using the Python `requests` library:
