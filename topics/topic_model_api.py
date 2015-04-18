@@ -2,12 +2,15 @@
 import json
 from flask import Flask
 from flask.ext.restful import Api, Resource, reqparse
+from flask.ext.restful.representations.json import output_json
 from gensim import models
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
+
+output_json.func_globals['settings'] = {'ensure_ascii': False, 'encoding':'utf8'}
 
 app = Flask(__name__)
 api = Api(app)
@@ -36,12 +39,12 @@ dictionary = models.utils.SaveLoad.load('/src/syr_irq_dict.model')
 class TopicsAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('content', type=str, location='json')
+        self.reqparse.add_argument('content', type=unicode, location='json')
         super(TopicsAPI, self).__init__()
 
     def post(self):
         args = self.reqparse.parse_args()
-        sentence = args['content'].encode('utf-8')
+        sentence = args['content'] #.encode('utf-8')
         content = [stemmer.stem(word) for word in sentence.lower().split() if word
                 not in stopwords]
         doc = dictionary.doc2bow(content)
