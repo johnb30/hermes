@@ -13,5 +13,5 @@ cliff:
   build: cliff/.
 topics:
   build: topics/.
-stanford:
-  build: stanford/.
+#stanford:
+#  build: stanford/.
