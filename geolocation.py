@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 def iso_convert(iso2c):
     """
     Takes a two character ISO country code and returns the corresponding 3
@@ -139,3 +142,14 @@ def process_cliff(located):
 
     except:
         return big_json
+
+
+def process_mordecai(located):
+    country_vec = []
+    for loc in located:
+        country_vec.append(loc['countrycode'])
+    focus_countries = Counter(country_vec)
+
+    out = {'country_vec': country_vec, 'locations': located,
+           'focus_countries': focus_countries}
+    return out

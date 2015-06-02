@@ -73,6 +73,16 @@ class HermesAPI(Resource):
         else:
             cliff_r = cliff_t
 
+        mordecai_ip = '52.5.183.171'
+        mordecai_url = 'http://{}:{}'.format(mordecai_ip, '8999')
+
+        mordecai_payload = {'text': args['content']}
+        mordecai_t = requests.post(mordecai_url, json=mordecai_payload).json()
+        if mordecai_t:
+            mordecai_r = geolocation.process_mordecai(mordecai_t)
+        else:
+            mordecai_r = mordecai_t
+
         if 'SYR' in cliff_r['country_vec'] or 'IRQ' in cliff_r['country_vec']:
             topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
             topics_url = 'http://{}:{}'.format(topics_ip, '5002')
@@ -88,7 +98,7 @@ class HermesAPI(Resource):
         stanford_r = ''
 
         return {'MITIE': mitie_r, 'CLIFF': cliff_r, 'topic_model': topics_r,
-                'stanford': stanford_r}, 201
+                'stanford': stanford_r, 'mordecai': mordecai_r}, 201
 
 api.add_resource(HermesAPI, '/')
 
