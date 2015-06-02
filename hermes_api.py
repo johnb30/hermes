@@ -74,10 +74,12 @@ class HermesAPI(Resource):
             cliff_r = cliff_t
 
         mordecai_ip = '52.5.183.171'
-        mordecai_url = 'http://{}:{}'.format(mordecai_ip, '8999')
+        mordecai_url = 'http://{}:{}/places'.format(mordecai_ip, '8999')
 
-        mordecai_payload = {'text': args['content']}
-        mordecai_t = requests.post(mordecai_url, json=mordecai_payload).json()
+        mordecai_headers = {'Content-Type': 'application/json'}
+        mordecai_payload = json.dumps({'text': args['content']})
+        mordecai_t = requests.post(mordecai_url, data=mordecai_payload,
+                                   headers=mordecai_headers).json()
         if mordecai_t:
             mordecai_r = geolocation.process_mordecai(mordecai_t)
         else:
