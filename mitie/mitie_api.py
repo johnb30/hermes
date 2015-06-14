@@ -7,6 +7,7 @@ parent = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('/MITIE/mitielib')
 
 import re
+import sys
 import json
 from flask import Flask
 from flask.ext.restful import Api, Resource, reqparse
