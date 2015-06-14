@@ -19,6 +19,11 @@ from mitie import *
 output_json.func_globals['settings'] = {'ensure_ascii': False, 'encoding':'utf8'}
 app = Flask(__name__)
 api = Api(app)
+formatter = logging.Formatter('%(levelname)s %(asctime)s %(filename)s: %(message)s')
+ch = logging.StreamHandler(sys.stdout)
+ch.setFormatter(formatter)
+app.logger.addHandler(ch)
+app.logger.setLevel(logging.INFO)
 
 ner = named_entity_extractor('/MITIE/MITIE-models/english/ner_model.dat')
 
@@ -30,6 +35,7 @@ class MitieAPI(Resource):
         super(MitieAPI, self).__init__()
 
     def post(self):
+        app.logger.info('Started processing content.')
         out = []
         args = self.reqparse.parse_args()
         content = args['content'].encode('utf-8')
@@ -44,28 +50,34 @@ class MitieAPI(Resource):
             entity_text = " ".join(tokens[i] for i in range)
             out.append({u'tag': tag, u'entity_text': entity_text, u'start':
                         start, u'stop': stop, u'score': score})
-        cleaned_tokens = []
-        stopwords = ["", "a", "an", "and", "are", "as", "at", "be", "but", "by",
-                     "for", "if", "in", "into", "is", "it", "no", "not", "of",
-                     "on", "or", "s", "such", "t", "that", "the", "their",
-                     "then", "there", "these", "they", "this", "to", "was",
-                     "will", "with"]
-        for t in tokens:
-            t = re.sub("\W", "", t).lower()
-            if t not in stopwords:
-                cleaned_tokens.append(t)
-        for e in reversed(entities):
-            range = e[0]
-            tag = e[1]
-            newt = tokens[range[0]]
-            if len(range) > 1:
-                for i in range:
-                    if i != range[0]:
-                        newt += str(' ') + tokens[i]
-                        newt = str('<span class="mitie-') + tag  + str('">') + newt + str('</span>')
-                        tokens = tokens[:range[0]] + [newt] + tokens[(range[-1] + 1):]
-        html = str(' ').join(tokens)
-        htmlu = unicode(html.decode("utf-8"))
+        #cleaned_tokens = []
+        #stopwords = ["", "a", "an", "and", "are", "as", "at", "be", "but", "by",
+        #             "for", "if", "in", "into", "is", "it", "no", "not", "of",
+        #             "on", "or", "s", "such", "t", "that", "the", "their",
+        #             "then", "there", "these", "they", "this", "to", "was",
+        #             "will", "with"]
+        #for t in tokens:
+        #    t = re.sub("\W", "", t).lower()
+        #    if t not in stopwords:
+        #        cleaned_tokens.append(t)
+        try:
+            for e in reversed(entities):
+                range = e[0]
+                tag = e[1]
+                newt = tokens[range[0]]
+                if len(range) > 1:
+                    for i in range:
+                        if i != range[0]:
+                            newt += str(' ') + tokens[i]
+                            newt = str('<span class="mitie-') + tag  + str('">') + newt + str('</span>')
+                            tokens = tokens[:range[0]] + [newt] + tokens[(range[-1] + 1):]
+            html = str(' ').join(tokens)
+            htmlu = unicode(html.decode("utf-8"))
+        except Exception as e:
+            app.logger.info(e)
+            htmlu = ''
+
+        app.logger.info('Finished processing content.')
         return {"entities": json.dumps(out), "cleaned_tokens":
                 json.dumps(cleaned_tokens), "html": json.dumps(htmlu)}, 201
 
