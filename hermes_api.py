@@ -6,7 +6,7 @@ import json
 import logging
 import requests
 import geolocation
-import jsonrpclib
+# import jsonrpclib
 from simplejson import loads
 from flask import Flask, jsonify, make_response
 from flask.ext.restful import Api, Resource, reqparse
@@ -74,6 +74,8 @@ class HermesAPI(Resource):
             mitie_r.raise_for_status()
             try:
                 mitie_r = mitie_r.json()
+                for key in mitie_r.keys():
+                    mitie_r[key] = json.loads(mitie_r[key])
             except Exception as e:
                 app.logger.error(e)
                 mitie_r = {}
@@ -124,18 +126,19 @@ class HermesAPI(Resource):
                 topics_url = 'http://{}:{}'.format(topics_ip, '5002')
                 topics_payload = {'content': args['content']} #.encode('utf-8')}
                 topics_r = requests.post(topics_url, json=topics_payload).json()
+                topics_r = json.loads(topics_r)
             else:
-                topics_r = json.dumps({})
+                topics_r = {}
         except Exception as e:
             app.logger.error(e)
-            topics_r = json.dumps({})
+            topics_r = {}
 
 
 # Bye for now CoreNLP
 #        stanford_ip = os.environ['STANFORD_PORT_5003_TCP_ADDR']
 #        server = jsonrpclib.Server('http://' + stanford_ip + ":5003")
 #        stanford_r = loads(server.parse(args['content']))
-        stanford_r = ''
+        stanford_r = {}
 
         app.logger.info('Finished processing content.')
         return {'MITIE': mitie_r, 'CLIFF': cliff_r, 'topic_model': topics_r,
