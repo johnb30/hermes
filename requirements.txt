@@ -4,4 +4,4 @@ Flask-RESTful==0.3.2
 Flask-HTTPAuth
 tornado==4.1
 simplejson==3.6.5
-jsonrpclib==0.1.3
+# jsonrpclib==0.1.3
