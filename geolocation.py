@@ -148,7 +148,7 @@ def process_mordecai(located):
     country_vec = []
     for loc in located:
         country_vec.append(loc['countrycode'])
-    focus_countries = Counter(country_vec)
+    focus_countries = dict(Counter(country_vec))
 
     out = {'country_vec': country_vec, 'locations': located,
            'focus_countries': focus_countries}
