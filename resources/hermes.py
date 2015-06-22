@@ -10,14 +10,16 @@ from threading import Thread
 from tornado.ioloop import IOLoop
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
+from flask import Flask
 from flask.ext.httpauth import HTTPBasicAuth
-from flask import Flask, jsonify, make_response
 from flask.ext.restful import Resource, reqparse
 from flask.ext.restful.representations.json import output_json
 
 output_json.func_globals['settings'] = {'ensure_ascii': False,
                                         'encoding': 'utf8'}
-
+                                        
+logger = logging.getLogger('__main__')
+auth = HTTPBasicAuth()
 
 @auth.get_password
 def get_password(username):
@@ -31,17 +33,7 @@ def unauthorized():
     # return 403 instead of 401 to prevent browsers from displaying the
     # default auth dialog
     return make_response(jsonify({'message': 'Unauthorized access'}), 403)
-
-
-@app.errorhandler(400)
-def bad_request(error):
-    return make_response(jsonify({'error': 'Bad request'}), 400)
-
-
-@app.errorhandler(404)
-def not_found(error):
-    return make_response(jsonify({'error': 'Not found'}), 404)
-
+                                        
 
 class HermesAPI(Resource):
     decorators = [auth.login_required]
@@ -53,9 +45,10 @@ class HermesAPI(Resource):
         self.content = args['content']
         self.result = {}
         super(HermesAPI, self).__init__()
+        
 
     def post(self):
-        app.logger.info('Started processing content')
+        logger.info('Started processing content.')
 
         funcs = [self.call_cliff, self.call_mitie, self.call_mordecai]
         threads = [Thread(target=f) for f in funcs]
@@ -64,7 +57,7 @@ class HermesAPI(Resource):
 
         try:
             if not self.result['CLIFF']:
-                app.logger.info('No CLIFF info.')
+                logger.info('No CLIFF info.')
             else:
                 apply_topic = ('SYR' in self.result['CLIFF']['country_vec'] or
                                'IRQ' in self.result['CLIFF']['country_vec'])
@@ -78,7 +71,7 @@ class HermesAPI(Resource):
                 else:
                     topics_r = {}
         except Exception as e:
-            app.logger.error(e)
+            logger.error(e)
             topics_r = {}
 
         self.result['topic_model'] = topics_r
@@ -91,7 +84,7 @@ class HermesAPI(Resource):
         stanford_r = {}
         self.result['stanford'] = stanford_r
 
-        app.logger.info('Finished processing content.')
+        logger.info('Finished processing content.')
         return self.result, 201
 
     def call_mitie(self):
@@ -110,10 +103,10 @@ class HermesAPI(Resource):
                 for key in mitie_r.keys():
                     mitie_r[key] = json.loads(mitie_r[key])
             except Exception as e:
-                app.logger.error(e)
+                logger.error(e)
                 mitie_r = {}
         except requests.exceptions.HTTPError as e:
-            app.logger.error(e)
+            logger.error(e)
             mitie_r = {}
 
         self.result[result_key] = mitie_r
@@ -127,7 +120,7 @@ class HermesAPI(Resource):
         try:
             cliff_t = requests.get(cliff_url, params=cliff_payload)
         except requests.exceptions.RequestException as e:
-            app.logger.error(e)
+            logger.error(e)
             cliff_r = {}
         try:
             cliff_t = cliff_t.json()
@@ -136,7 +129,7 @@ class HermesAPI(Resource):
             else:
                 cliff_r = cliff_t
         except Exception as e:
-            app.logger.error(e)
+            logger.error(e)
             cliff_r = {}
 
         self.result[result_key] = cliff_r
@@ -152,7 +145,7 @@ class HermesAPI(Resource):
             mordecai_t = requests.post(mordecai_url, data=mordecai_payload,
                                        headers=mordecai_headers).json()
         except requests.exceptions.RequestException as e:
-            app.logger.error(e)
+            logger.error(e)
             mordecai_t = {}
         if mordecai_t:
             mordecai_r = geolocation.process_mordecai(mordecai_t)
