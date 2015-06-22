@@ -5,8 +5,8 @@ import sys
 import json
 import logging
 import requests
-from flask.ext.httpauth import HTTPBasicAuth
 from flask import jsonify, make_response
+from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.restful import Resource, reqparse
 from flask.ext.restful.representations.json import output_json
 

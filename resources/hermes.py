@@ -7,17 +7,14 @@ import logging
 import requests
 import geolocation
 from threading import Thread
-from tornado.ioloop import IOLoop
-from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
-from flask import Flask
+from flask import jsonify, make_response
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.restful import Resource, reqparse
 from flask.ext.restful.representations.json import output_json
 
 output_json.func_globals['settings'] = {'ensure_ascii': False,
                                         'encoding': 'utf8'}
-                                        
+
 logger = logging.getLogger('__main__')
 auth = HTTPBasicAuth()
 
@@ -33,7 +30,7 @@ def unauthorized():
     # return 403 instead of 401 to prevent browsers from displaying the
     # default auth dialog
     return make_response(jsonify({'message': 'Unauthorized access'}), 403)
-                                        
+
 
 class HermesAPI(Resource):
     decorators = [auth.login_required]
@@ -45,7 +42,7 @@ class HermesAPI(Resource):
         self.content = args['content']
         self.result = {}
         super(HermesAPI, self).__init__()
-        
+
 
     def post(self):
         logger.info('Started processing content.')

@@ -6,11 +6,7 @@ import json
 import logging
 import requests
 import geolocation
-from threading import Thread
-from tornado.ioloop import IOLoop
-from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
-from flask import Flask
+from flask import jsonify, make_response
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.restful import Resource, reqparse
 from flask.ext.restful.representations.json import output_json
