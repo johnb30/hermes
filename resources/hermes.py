@@ -12,20 +12,11 @@ from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
 from flask.ext.httpauth import HTTPBasicAuth
 from flask import Flask, jsonify, make_response
-from flask.ext.restful import Api, Resource, reqparse
+from flask.ext.restful import Resource, reqparse
 from flask.ext.restful.representations.json import output_json
 
 output_json.func_globals['settings'] = {'ensure_ascii': False,
                                         'encoding': 'utf8'}
-
-app = Flask(__name__)
-api = Api(app)
-auth = HTTPBasicAuth()
-formatter = logging.Formatter('%(levelname)s %(asctime)s %(filename)s: %(message)s')
-ch = logging.StreamHandler(sys.stdout)
-ch.setFormatter(formatter)
-app.logger.addHandler(ch)
-app.logger.setLevel(logging.INFO)
 
 
 @auth.get_password
@@ -169,12 +160,3 @@ class HermesAPI(Resource):
             mordecai_r = mordecai_t
 
         self.result[result_key] = mordecai_r
-
-
-api.add_resource(HermesAPI, '/')
-
-if __name__ == '__main__':
-    app.logger.info('Starting Hermes.')
-    http_server = HTTPServer(WSGIContainer(app))
-    http_server.listen(5000)
-    IOLoop.instance().start()
