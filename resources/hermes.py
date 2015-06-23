@@ -55,16 +55,21 @@ class HermesAPI(Resource):
         try:
             if not self.result['CLIFF']:
                 logger.info('No CLIFF info.')
+                topics_r = {}
             else:
                 apply_topic = ('SYR' in self.result['CLIFF']['country_vec'] or
                                'IRQ' in self.result['CLIFF']['country_vec'])
                 if apply_topic:
-                    topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
-                    topics_url = 'http://{}:{}'.format(topics_ip, '5002')
-                    topics_payload = {'content': self.content}
-                    topics_r = requests.post(topics_url,
-                                             json=topics_payload).json()
-                    topics_r = json.loads(topics_r)
+                    try:
+                        topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
+                        topics_url = 'http://{}:{}'.format(topics_ip, '5002')
+                        topics_payload = {'content': self.content}
+                        topics_r = requests.post(topics_url,
+                                                json=topics_payload).json()
+                        topics_r = json.loads(topics_r)
+                    except KeyError:
+                        logger.warning('Unable to reach Topics container. Returning nothing.')
+                        topics_r = {}
                 else:
                     topics_r = {}
         except Exception as e:
@@ -89,44 +94,47 @@ class HermesAPI(Resource):
         mitie_payload = {'content': self.content}  # .encode('utf-8')}
 
         # get MITIE address
-        mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR']
-        mitie_url = 'http://{}:{}'.format(mitie_ip, '5001')
-        # hit MITIE containter
         try:
-            mitie_r = requests.post(mitie_url, json=mitie_payload)
-            mitie_r.raise_for_status()
+            mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR']
+            mitie_url = 'http://{}:{}'.format(mitie_ip, '5001')
+            # hit MITIE containter
             try:
+                mitie_r = requests.post(mitie_url, json=mitie_payload)
+                mitie_r.raise_for_status()
                 mitie_r = mitie_r.json()
                 for key in mitie_r.keys():
                     mitie_r[key] = json.loads(mitie_r[key])
             except Exception as e:
                 logger.error(e)
                 mitie_r = {}
-        except requests.exceptions.HTTPError as e:
-            logger.error(e)
+
+        except KeyError:
+            logger.warning('Unable to reach MITIE container. Returning nothing.')
             mitie_r = {}
 
         self.result[result_key] = mitie_r
 
     def call_cliff(self):
         result_key = 'CLIFF'
-        cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
-        cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
-                                                                 '8080')
-        cliff_payload = {'q': self.content}  # .encode('utf-8')}
+
         try:
-            cliff_t = requests.get(cliff_url, params=cliff_payload)
-        except requests.exceptions.RequestException as e:
-            logger.error(e)
-            cliff_r = {}
-        try:
-            cliff_t = cliff_t.json()
-            if cliff_t:
-                cliff_r = geolocation.process_cliff(cliff_t)
-            else:
-                cliff_r = cliff_t
-        except Exception as e:
-            logger.error(e)
+            cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
+            cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
+                                                                    '8080')
+            cliff_payload = {'q': self.content}  # .encode('utf-8')}
+            try:
+                cliff_t = requests.get(cliff_url, params=cliff_payload)
+                cliff_t = cliff_t.json()
+                if cliff_t:
+                    cliff_r = geolocation.process_cliff(cliff_t)
+                else:
+                    cliff_r = cliff_t
+            except Exception as e:
+                logger.error(e)
+                cliff_r = {}
+
+        except KeyError:
+            logger.warning('Unable to reach CLIFF container. Returning nothing.')
             cliff_r = {}
 
         self.result[result_key] = cliff_r

@@ -1,10 +1,9 @@
 #!flask/bin/python
 from __future__ import unicode_literals
-import os
-import sys
 import json
 import logging
 import requests
+import geolocation
 from flask import jsonify, make_response
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.restful import Resource, reqparse
@@ -30,7 +29,7 @@ def unauthorized():
     return make_response(jsonify({'message': 'Unauthorized access'}), 403)
 
 
-class MitieAPI(Resource):
+class MordecaiAPI(Resource):
     decorators = [auth.login_required]
 
     def __init__(self):
@@ -39,35 +38,31 @@ class MitieAPI(Resource):
         args = self.reqparse.parse_args()  # setup the request parameters
         self.content = args['content']
         self.result = {}
-        super(MitieAPI, self).__init__()
+        super(MordecaiAPI, self).__init__()
+
 
     def post(self):
         logger.info('Started processing content.')
-        self.call_mitie()
-        logger.info('Finished processing content.')
+        self.call_mordecai()
+        logger.info('Finished processing content')
         return self.result, 201
 
-    def call_mitie(self):
-        result_key = 'MITIE'
-        mitie_payload = {'content': self.content}  # .encode('utf-8')}
+    def call_mordecai(self):
+        result_key = 'mordecai'
+        mordecai_ip = '52.5.183.171'
+        mordecai_url = 'http://{}:{}/places'.format(mordecai_ip, '8999')
 
-        # get MITIE address
         try:
-            mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR']
-            mitie_url = 'http://{}:{}'.format(mitie_ip, '5001')
-            # hit MITIE containter
-            try:
-                mitie_r = requests.post(mitie_url, json=mitie_payload)
-                mitie_r.raise_for_status()
-                mitie_r = mitie_r.json()
-                for key in mitie_r.keys():
-                    mitie_r[key] = json.loads(mitie_r[key])
-            except Exception as e:
-                logger.error(e)
-                mitie_r = {}
+            mordecai_headers = {'Content-Type': 'application/json'}
+            mordecai_payload = json.dumps({'text': self.content})
+            mordecai_t = requests.post(mordecai_url, data=mordecai_payload,
+                                       headers=mordecai_headers).json()
+        except requests.exceptions.RequestException as e:
+            logger.error(e)
+            mordecai_t = {}
+        if mordecai_t:
+            mordecai_r = geolocation.process_mordecai(mordecai_t)
+        else:
+            mordecai_r = mordecai_t
 
-        except KeyError:
-            logger.warning('Unable to reach MITIE container. Returning nothing.')
-            mitie_r = {}
-
-        self.result[result_key] = mitie_r
+        self.result[result_key] = mordecai_r

@@ -5,6 +5,7 @@ import sys
 import json
 import logging
 import requests
+from threading import Thread
 from flask import jsonify, make_response
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.restful import Resource, reqparse
@@ -30,7 +31,7 @@ def unauthorized():
     return make_response(jsonify({'message': 'Unauthorized access'}), 403)
 
 
-class MitieAPI(Resource):
+class TopicsAPI(Resource):
     decorators = [auth.login_required]
 
     def __init__(self):
@@ -39,35 +40,23 @@ class MitieAPI(Resource):
         args = self.reqparse.parse_args()  # setup the request parameters
         self.content = args['content']
         self.result = {}
-        super(MitieAPI, self).__init__()
+        super(TopicsAPI, self).__init__()
+
 
     def post(self):
         logger.info('Started processing content.')
-        self.call_mitie()
+
+        try:
+            topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
+            topics_url = 'http://{}:{}'.format(topics_ip, '5002')
+            topics_payload = {'content': self.content}
+            topics_r = requests.post(topics_url, json=topics_payload).json()
+            topics_r = json.loads(topics_r)
+        except Exception as e:
+            logger.error(e)
+            topics_r = {}
+
+        self.result['topic_model'] = topics_r
+
         logger.info('Finished processing content.')
         return self.result, 201
-
-    def call_mitie(self):
-        result_key = 'MITIE'
-        mitie_payload = {'content': self.content}  # .encode('utf-8')}
-
-        # get MITIE address
-        try:
-            mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR']
-            mitie_url = 'http://{}:{}'.format(mitie_ip, '5001')
-            # hit MITIE containter
-            try:
-                mitie_r = requests.post(mitie_url, json=mitie_payload)
-                mitie_r.raise_for_status()
-                mitie_r = mitie_r.json()
-                for key in mitie_r.keys():
-                    mitie_r[key] = json.loads(mitie_r[key])
-            except Exception as e:
-                logger.error(e)
-                mitie_r = {}
-
-        except KeyError:
-            logger.warning('Unable to reach MITIE container. Returning nothing.')
-            mitie_r = {}
-
-        self.result[result_key] = mitie_r

@@ -45,29 +45,30 @@ class CliffAPI(Resource):
 
     def post(self):
         logger.info('Started processing content.')
-        self.call_cliff
+        self.call_cliff()
         logger.info('Finished processing content.')
         return self.result, 201
 
     def call_cliff(self):
         result_key = 'CLIFF'
-        cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
-        cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
-                                                                 '8080')
-        cliff_payload = {'q': self.content}  # .encode('utf-8')}
+
         try:
-            cliff_t = requests.get(cliff_url, params=cliff_payload)
-        except requests.exceptions.RequestException as e:
-            logger.error(e)
-            cliff_r = {}
-        try:
-            cliff_t = cliff_t.json()
-            if cliff_t:
-                cliff_r = geolocation.process_cliff(cliff_t)
-            else:
-                cliff_r = cliff_t
-        except Exception as e:
-            logger.error(e)
+            cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
+            cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
+                                                                    '8080')
+            cliff_payload = {'q': self.content}  # .encode('utf-8')}
+            try:
+                cliff_t = requests.get(cliff_url, params=cliff_payload)
+                cliff_t = cliff_t.json()
+                if cliff_t:
+                    cliff_r = geolocation.process_cliff(cliff_t)
+                else:
+                    cliff_r = cliff_t
+            except Exception as e:
+                logger.error(e)
+                cliff_r = {}
+        except KeyError:
+            logger.warning('Unable to reach CLIFF container. Returning nothing.')
             cliff_r = {}
 
         self.result[result_key] = cliff_r

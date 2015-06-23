@@ -1,6 +1,6 @@
 import os
-import sys
 import logging
+import requests
 from tornado.ioloop import IOLoop
 from tornado.wsgi import WSGIContainer
 from tornado.httpserver import HTTPServer
@@ -8,6 +8,9 @@ from flask import Flask, jsonify, make_response
 from flask.ext.restful import Api
 from resources.hermes import HermesAPI
 from resources.mitie import MitieAPI
+from resources.cliff import CliffAPI
+from resources.topics import TopicsAPI
+from resources.mordecai import MordecaiAPI
 
 app = Flask(__name__)
 api = Api(app)
@@ -15,8 +18,8 @@ api = Api(app)
 api.add_resource(HermesAPI, '/hermes')
 api.add_resource(MitieAPI, '/hermes/mitie')
 api.add_resource(CliffAPI, '/hermes/cliff')
-#api.add_resource(TopicsAPI, '/hermes/topics')
-#api.add_resource(MordecaiAPI, '/hermes/mordecai')
+api.add_resource(TopicsAPI, '/hermes/topics')
+api.add_resource(MordecaiAPI, '/hermes/mordecai')
 
 @app.errorhandler(400)
 def bad_request(error):
@@ -40,16 +43,22 @@ if __name__ == '__main__':
     except KeyError:
         app.logger.info('Unable to reach MITIE on port 5001')
     try:
-        mitie_ip = os.environ['TOPICS_PORT_5001_TCP_ADDR']
+        topics_ip = os.environ['TOPICS_PORT_5001_TCP_ADDR']
         app.logger.info('Successfully reached Topics on port 5002')
     except KeyError:
         app.logger.info('Unable to reach Topics on port 5002')
     try:
-        mitie_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
+        cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
         app.logger.info('Successfully reached CLIFF on port 8080')
     except KeyError:
         app.logger.info('Unable to reach CLIFF on port 8080')
-    
+    headers = {'Content-Type': 'application/json'}
+    r = requests.get('http://52.5.183.171:8999/places', headers=headers)
+    if r.status_code == 200:
+        app.logger.info('Successfully reached Mordecai at 52.5.183.171')
+    else:
+        app.logger.info('Unable to reach Mordecai at 52.5.183.171')
+
     http_server = HTTPServer(WSGIContainer(app))
     http_server.listen(5000)
     IOLoop.instance().start()
