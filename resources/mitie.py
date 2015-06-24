@@ -1,7 +1,6 @@
 #!flask/bin/python
 from __future__ import unicode_literals
 import os
-import sys
 import json
 import logging
 import requests
@@ -15,6 +14,7 @@ output_json.func_globals['settings'] = {'ensure_ascii': False,
 
 logger = logging.getLogger('__main__')
 auth = HTTPBasicAuth()
+
 
 @auth.get_password
 def get_password(username):

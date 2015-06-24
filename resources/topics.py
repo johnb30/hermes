@@ -1,11 +1,9 @@
 #!flask/bin/python
 from __future__ import unicode_literals
 import os
-import sys
 import json
 import logging
 import requests
-from threading import Thread
 from flask import jsonify, make_response
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.restful import Resource, reqparse
@@ -16,6 +14,7 @@ output_json.func_globals['settings'] = {'ensure_ascii': False,
 
 logger = logging.getLogger('__main__')
 auth = HTTPBasicAuth()
+
 
 @auth.get_password
 def get_password(username):
@@ -41,7 +40,6 @@ class TopicsAPI(Resource):
         self.content = args['content']
         self.result = {}
         super(TopicsAPI, self).__init__()
-
 
     def post(self):
         logger.info('Started processing content.')

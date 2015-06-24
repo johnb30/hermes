@@ -1,8 +1,6 @@
 #!flask/bin/python
 from __future__ import unicode_literals
 import os
-import sys
-import json
 import logging
 import requests
 import geolocation
@@ -16,6 +14,7 @@ output_json.func_globals['settings'] = {'ensure_ascii': False,
 
 logger = logging.getLogger('__main__')
 auth = HTTPBasicAuth()
+
 
 @auth.get_password
 def get_password(username):
@@ -37,15 +36,16 @@ class CliffAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('content', type=unicode, location='json')
-        args = self.reqparse.parse_args()  # setup the request parameters
-        self.content = args['content']
-        self.result = {}
         super(CliffAPI, self).__init__()
-
 
     def post(self):
         logger.info('Started processing content.')
+
+        args = self.reqparse.parse_args()  # setup the request parameters
+        self.content = args['content']
+        self.result = {}
         self.call_cliff()
+
         logger.info('Finished processing content.')
         return self.result, 201
 
@@ -55,7 +55,7 @@ class CliffAPI(Resource):
         try:
             cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
             cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
-                                                                    '8080')
+                                                                     '8080')
             cliff_payload = {'q': self.content}  # .encode('utf-8')}
             try:
                 cliff_t = requests.get(cliff_url, params=cliff_payload)

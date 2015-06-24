@@ -1,7 +1,6 @@
 #!flask/bin/python
 from __future__ import unicode_literals
 import os
-import sys
 import json
 import logging
 import requests
@@ -17,6 +16,7 @@ output_json.func_globals['settings'] = {'ensure_ascii': False,
 
 logger = logging.getLogger('__main__')
 auth = HTTPBasicAuth()
+
 
 @auth.get_password
 def get_password(username):
@@ -38,14 +38,14 @@ class HermesAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('content', type=unicode, location='json')
-        args = self.reqparse.parse_args()  # setup the request parameters
-        self.content = args['content']
-        self.result = {}
         super(HermesAPI, self).__init__()
-
 
     def post(self):
         logger.info('Started processing content.')
+
+        args = self.reqparse.parse_args()  # setup the request parameters
+        self.content = args['content']
+        self.result = {}
 
         funcs = [self.call_cliff, self.call_mitie, self.call_mordecai]
         threads = [Thread(target=f) for f in funcs]
@@ -54,30 +54,20 @@ class HermesAPI(Resource):
 
         try:
             if not self.result['CLIFF']:
-                logger.info('No CLIFF info.')
-                topics_r = {}
+                logger.info('No CLIFF info. Skipping topic model.')
+                topics_d = {}
             else:
                 apply_topic = ('SYR' in self.result['CLIFF']['country_vec'] or
                                'IRQ' in self.result['CLIFF']['country_vec'])
                 if apply_topic:
-                    try:
-                        topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
-                        topics_url = 'http://{}:{}'.format(topics_ip, '5002')
-                        topics_payload = {'content': self.content}
-                        topics_r = requests.post(topics_url,
-                                                json=topics_payload).json()
-                        topics_r = json.loads(topics_r)
-                    except KeyError:
-                        logger.warning('Unable to reach Topics container. Returning nothing.')
-                        topics_r = {}
+                    topics_d = self.call_topics()
                 else:
-                    topics_r = {}
+                    topics_d = {}
+            self.result['topic_model'] = topics_d
         except Exception as e:
             logger.error(e)
-            topics_r = {}
-
-        self.result['topic_model'] = topics_r
-
+            topics_d = {}
+            self.result['topic_model'] = topics_d
 
 # Bye for now CoreNLP
 #        stanford_ip = os.environ['STANFORD_PORT_5003_TCP_ADDR']
@@ -99,6 +89,7 @@ class HermesAPI(Resource):
             mitie_url = 'http://{}:{}'.format(mitie_ip, '5001')
             # hit MITIE containter
             try:
+                logger.info('Sending to MITIE')
                 mitie_r = requests.post(mitie_url, json=mitie_payload)
                 mitie_r.raise_for_status()
                 mitie_r = mitie_r.json()
@@ -120,9 +111,10 @@ class HermesAPI(Resource):
         try:
             cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
             cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
-                                                                    '8080')
+                                                                     '8080')
             cliff_payload = {'q': self.content}  # .encode('utf-8')}
             try:
+                logger.info('Sending to CLIFF.')
                 cliff_t = requests.get(cliff_url, params=cliff_payload)
                 cliff_t = cliff_t.json()
                 if cliff_t:
@@ -145,6 +137,7 @@ class HermesAPI(Resource):
         mordecai_url = 'http://{}:{}/places'.format(mordecai_ip, '8999')
 
         try:
+            logger.info('Sending to Mordecai.')
             mordecai_headers = {'Content-Type': 'application/json'}
             mordecai_payload = json.dumps({'text': self.content})
             mordecai_t = requests.post(mordecai_url, data=mordecai_payload,
@@ -158,3 +151,19 @@ class HermesAPI(Resource):
             mordecai_r = mordecai_t
 
         self.result[result_key] = mordecai_r
+
+    def call_topics(self):
+        result_key = 'topic_model'
+        topics_payload = {'content': self.content}
+
+        try:
+            topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
+            topics_url = 'http://{}:{}'.format(topics_ip, '5002')
+            logger.info('Sending to the topic model.')
+            topics_r = requests.post(topics_url,
+                                     json=topics_payload).json()
+            topics_r = json.loads(topics_r)
+        except KeyError:
+            logger.warning('Unable to reach Topics container. Returning nothing.')
+            topics_r = {}
+        return topics_r
