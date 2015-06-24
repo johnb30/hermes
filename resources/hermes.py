@@ -1,31 +1,21 @@
 #!flask/bin/python
 from __future__ import unicode_literals
 import os
-import sys
 import json
 import logging
 import requests
 import geolocation
 from threading import Thread
-from tornado.ioloop import IOLoop
-from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
+from flask import jsonify, make_response
 from flask.ext.httpauth import HTTPBasicAuth
-from flask import Flask, jsonify, make_response
-from flask.ext.restful import Api, Resource, reqparse
+from flask.ext.restful import Resource, reqparse
 from flask.ext.restful.representations.json import output_json
 
 output_json.func_globals['settings'] = {'ensure_ascii': False,
                                         'encoding': 'utf8'}
 
-app = Flask(__name__)
-api = Api(app)
+logger = logging.getLogger('__main__')
 auth = HTTPBasicAuth()
-formatter = logging.Formatter('%(levelname)s %(asctime)s %(filename)s: %(message)s')
-ch = logging.StreamHandler(sys.stdout)
-ch.setFormatter(formatter)
-app.logger.addHandler(ch)
-app.logger.setLevel(logging.INFO)
 
 
 @auth.get_password
@@ -42,29 +32,20 @@ def unauthorized():
     return make_response(jsonify({'message': 'Unauthorized access'}), 403)
 
 
-@app.errorhandler(400)
-def bad_request(error):
-    return make_response(jsonify({'error': 'Bad request'}), 400)
-
-
-@app.errorhandler(404)
-def not_found(error):
-    return make_response(jsonify({'error': 'Not found'}), 404)
-
-
 class HermesAPI(Resource):
     decorators = [auth.login_required]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('content', type=unicode, location='json')
-        args = self.reqparse.parse_args()  # setup the request parameters
-        self.content = args['content']
-        self.result = {}
         super(HermesAPI, self).__init__()
 
     def post(self):
-        app.logger.info('Started processing content')
+        logger.info('Started processing content.')
+
+        args = self.reqparse.parse_args()  # setup the request parameters
+        self.content = args['content']
+        self.result = {}
 
         funcs = [self.call_cliff, self.call_mitie, self.call_mordecai]
         threads = [Thread(target=f) for f in funcs]
@@ -73,25 +54,20 @@ class HermesAPI(Resource):
 
         try:
             if not self.result['CLIFF']:
-                app.logger.info('No CLIFF info.')
+                logger.info('No CLIFF info. Skipping topic model.')
+                topics_d = {}
             else:
                 apply_topic = ('SYR' in self.result['CLIFF']['country_vec'] or
                                'IRQ' in self.result['CLIFF']['country_vec'])
                 if apply_topic:
-                    topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
-                    topics_url = 'http://{}:{}'.format(topics_ip, '5002')
-                    topics_payload = {'content': self.content}
-                    topics_r = requests.post(topics_url,
-                                             json=topics_payload).json()
-                    topics_r = json.loads(topics_r)
+                    topics_d = self.call_topics()
                 else:
-                    topics_r = {}
+                    topics_d = {}
+            self.result['topic_model'] = topics_d
         except Exception as e:
-            app.logger.error(e)
-            topics_r = {}
-
-        self.result['topic_model'] = topics_r
-
+            logger.error(e)
+            topics_d = {}
+            self.result['topic_model'] = topics_d
 
 # Bye for now CoreNLP
 #        stanford_ip = os.environ['STANFORD_PORT_5003_TCP_ADDR']
@@ -100,7 +76,7 @@ class HermesAPI(Resource):
         stanford_r = {}
         self.result['stanford'] = stanford_r
 
-        app.logger.info('Finished processing content.')
+        logger.info('Finished processing content.')
         return self.result, 201
 
     def call_mitie(self):
@@ -108,44 +84,49 @@ class HermesAPI(Resource):
         mitie_payload = {'content': self.content}  # .encode('utf-8')}
 
         # get MITIE address
-        mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR']
-        mitie_url = 'http://{}:{}'.format(mitie_ip, '5001')
-        # hit MITIE containter
         try:
-            mitie_r = requests.post(mitie_url, json=mitie_payload)
-            mitie_r.raise_for_status()
+            mitie_ip = os.environ['MITIE_PORT_5001_TCP_ADDR']
+            mitie_url = 'http://{}:{}'.format(mitie_ip, '5001')
+            # hit MITIE containter
             try:
+                logger.info('Sending to MITIE')
+                mitie_r = requests.post(mitie_url, json=mitie_payload)
+                mitie_r.raise_for_status()
                 mitie_r = mitie_r.json()
                 for key in mitie_r.keys():
                     mitie_r[key] = json.loads(mitie_r[key])
             except Exception as e:
-                app.logger.error(e)
+                logger.error(e)
                 mitie_r = {}
-        except requests.exceptions.HTTPError as e:
-            app.logger.error(e)
+
+        except KeyError:
+            logger.warning('Unable to reach MITIE container. Returning nothing.')
             mitie_r = {}
 
         self.result[result_key] = mitie_r
 
     def call_cliff(self):
         result_key = 'CLIFF'
-        cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
-        cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
-                                                                 '8080')
-        cliff_payload = {'q': self.content}  # .encode('utf-8')}
+
         try:
-            cliff_t = requests.get(cliff_url, params=cliff_payload)
-        except requests.exceptions.RequestException as e:
-            app.logger.error(e)
-            cliff_r = {}
-        try:
-            cliff_t = cliff_t.json()
-            if cliff_t:
-                cliff_r = geolocation.process_cliff(cliff_t)
-            else:
-                cliff_r = cliff_t
-        except Exception as e:
-            app.logger.error(e)
+            cliff_ip = os.environ['CLIFF_PORT_8080_TCP_ADDR']
+            cliff_url = 'http://{}:{}/CLIFF-2.0.0/parse/text'.format(cliff_ip,
+                                                                     '8080')
+            cliff_payload = {'q': self.content}  # .encode('utf-8')}
+            try:
+                logger.info('Sending to CLIFF.')
+                cliff_t = requests.get(cliff_url, params=cliff_payload)
+                cliff_t = cliff_t.json()
+                if cliff_t:
+                    cliff_r = geolocation.process_cliff(cliff_t)
+                else:
+                    cliff_r = cliff_t
+            except Exception as e:
+                logger.error(e)
+                cliff_r = {}
+
+        except KeyError:
+            logger.warning('Unable to reach CLIFF container. Returning nothing.')
             cliff_r = {}
 
         self.result[result_key] = cliff_r
@@ -156,12 +137,13 @@ class HermesAPI(Resource):
         mordecai_url = 'http://{}:{}/places'.format(mordecai_ip, '8999')
 
         try:
+            logger.info('Sending to Mordecai.')
             mordecai_headers = {'Content-Type': 'application/json'}
             mordecai_payload = json.dumps({'text': self.content})
             mordecai_t = requests.post(mordecai_url, data=mordecai_payload,
                                        headers=mordecai_headers).json()
         except requests.exceptions.RequestException as e:
-            app.logger.error(e)
+            logger.error(e)
             mordecai_t = {}
         if mordecai_t:
             mordecai_r = geolocation.process_mordecai(mordecai_t)
@@ -170,11 +152,18 @@ class HermesAPI(Resource):
 
         self.result[result_key] = mordecai_r
 
+    def call_topics(self):
+        result_key = 'topic_model'
+        topics_payload = {'content': self.content}
 
-api.add_resource(HermesAPI, '/')
-
-if __name__ == '__main__':
-    app.logger.info('Starting Hermes.')
-    http_server = HTTPServer(WSGIContainer(app))
-    http_server.listen(5000)
-    IOLoop.instance().start()
+        try:
+            topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
+            topics_url = 'http://{}:{}'.format(topics_ip, '5002')
+            logger.info('Sending to the topic model.')
+            topics_r = requests.post(topics_url,
+                                     json=topics_payload).json()
+            topics_r = json.loads(topics_r)
+        except KeyError:
+            logger.warning('Unable to reach Topics container. Returning nothing.')
+            topics_r = {}
+        return topics_r
