@@ -93,8 +93,6 @@ class HermesAPI(Resource):
                 mitie_r = requests.post(mitie_url, json=mitie_payload)
                 mitie_r.raise_for_status()
                 mitie_r = mitie_r.json()
-                for key in mitie_r.keys():
-                    mitie_r[key] = json.loads(mitie_r[key])
             except Exception as e:
                 logger.error(e)
                 mitie_r = {}
@@ -153,7 +151,6 @@ class HermesAPI(Resource):
         self.result[result_key] = mordecai_r
 
     def call_topics(self):
-        result_key = 'topic_model'
         topics_payload = {'content': self.content}
 
         try:
