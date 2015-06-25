@@ -1,5 +1,5 @@
 #!flask/bin/python
-import json
+import logging
 from flask import Flask
 from flask.ext.restful import Api, Resource, reqparse
 from flask.ext.restful.representations.json import output_json
@@ -14,6 +14,10 @@ output_json.func_globals['settings'] = {'ensure_ascii': False, 'encoding':'utf8'
 
 app = Flask(__name__)
 api = Api(app)
+
+logging.basicConfig(format='%(levelname)s %(asctime)s %(filename)s: %(message)s')
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 stopwords = stopwords.words('english')
 stemmer = PorterStemmer()
@@ -47,9 +51,24 @@ class TopicsAPI(Resource):
         sentence = args['content'] #.encode('utf-8')
         content = [stemmer.stem(word) for word in sentence.lower().split() if word
                 not in stopwords]
+
+        logger.info('Started processing content.')
+        try:
+            out = self.process(content)
+            to_return = self.postprocess(out)
+            logger.info('Finished processing content.')
+        except Exception as e:
+            logger.info(e)
+            to_return = {}
+
+        return to_return
+
+    def process(self, content):
         doc = dictionary.doc2bow(content)
         out = model[doc]
+        return out
 
+    def postprocess(self, out):
         doc_max = 0.0
         max_index = ''
         for top in out:
@@ -63,10 +82,10 @@ class TopicsAPI(Resource):
             new_tuple = (tops_mapping[top[0]], top[1])
             tops_strings.append(new_tuple)
 
-        to_return = {'topics': out, 'topic_strings': tops_strings,
-                    'highest_topic_index': max_index,
-                    'highest_topic_string': max_top_string}
-        return json.dumps(to_return)
+        res = {'topics': out, 'topic_strings': tops_strings,
+               'highest_topic_index': max_index, 'highest_topic_string':
+               max_top_string}
+        return res
 
 api.add_resource(TopicsAPI, '/')
 
