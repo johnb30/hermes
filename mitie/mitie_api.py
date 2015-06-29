@@ -6,7 +6,6 @@ import os
 parent = os.path.dirname(os.path.realpath(__file__))
 sys.path.append('/MITIE/mitielib')
 
-import sys
 import logging
 from flask import Flask
 from flask.ext.restful import Api, Resource, reqparse
@@ -34,12 +33,33 @@ class MitieAPI(Resource):
         super(MitieAPI, self).__init__()
 
     def post(self):
-        app.logger.info('Started processing content.')
-        out = []
+        logger.info('Started processing content.')
+
         args = self.reqparse.parse_args()
         content = args['content'].encode('utf-8')
+
+        try:
+            entities, tokens = self.mitie_extract(content)
+            out = self.mitie_process(entities, tokens)
+        except Exception as e:
+            app.logger.info(e)
+            out = []
+        try:
+            htmlu = self.mitie_html(entities, tokens)
+        except Exception as e:
+            app.logger.info(e)
+            htmlu = ''
+
+        logger.info('Finished processing content.')
+        return {'entities': out, 'html': htmlu}, 201
+
+    def mitie_extract(self, content):
         tokens = tokenize(content)
         entities = ner.extract_entities(tokens)
+        return entities, tokens
+
+    def mitie_process(self, entities, tokens):
+        out = []
         for e in entities:
             range = e[0]
             start = range.__reduce__()[1][0]
@@ -48,26 +68,23 @@ class MitieAPI(Resource):
             score = e[2]
             entity_text = ' '.join(tokens[i] for i in range)
             out.append({'tag': tag, 'entity_text': entity_text, 'start':
-                        start, 'stop': stop, 'score': score})
-        try:
-            for e in reversed(entities):
-                range = e[0]
-                tag = e[1]
-                newt = tokens[range[0]]
-                if len(range) > 1:
-                    for i in range:
-                        if i != range[0]:
-                            newt += str(' ') + tokens[i]
-                            newt = str('<span class="mitie-') + tag + str('">') + newt + str('</span>')
-                            tokens = tokens[:range[0]] + [newt] + tokens[(range[-1] + 1):]
-            html = str(' ').join(tokens)
-            htmlu = unicode(html.decode("utf-8"))
-        except Exception as e:
-            app.logger.info(e)
-            htmlu = ''
+                              start, 'stop': stop, 'score': score})
+        return out
 
-        app.logger.info('Finished processing content.')
-        return {'entities': out, 'html': htmlu}, 201
+    def mitie_html(self, entities, tokens):
+        for e in reversed(entities):
+            range = e[0]
+            tag = e[1]
+            newt = tokens[range[0]]
+            if len(range) > 1:
+                for i in range:
+                    if i != range[0]:
+                        newt += str(' ') + tokens[i]
+                        newt = str('<span class="mitie-') + tag + str('">') + newt + str('</span>')
+                        tokens = tokens[:range[0]] + [newt] + tokens[(range[-1] + 1):]
+        html = str(' ').join(tokens)
+        htmlu = unicode(html.decode("utf-8"))
+        return htmlu
 
 api.add_resource(MitieAPI, '/')
 
