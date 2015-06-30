@@ -19,7 +19,7 @@ output_json.func_globals['settings'] = {'ensure_ascii': False, 'encoding': 'utf8
 app = Flask(__name__)
 api = Api(app)
 
-logging.basicConfig(format='%(levelname)s %(asctime)s %(filename)s: %(message)s')
+logging.basicConfig(format='%(levelname)s %(asctime)s %(filename)s %(lineno)d: %(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
