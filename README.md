@@ -19,14 +19,14 @@ features in a box). The following services are currently implemented:
 - **Topic Model:** LDA model with 50 topics, implemented in
     [gensim](https://radimrehurek.com/gensim/). Designed for a specific set of
     topics. Only stories geolocated to Iraq or Syria are run through this container.
-- **Mordecai:** Geolocation provided my
+- **Mordecai:** Geolocation provided by
   [Mordecai](https://github.com/caerusassociates/mordecai), a full-text
   geolocation tool developed by [Caerus
   Associates](http://caerusassociates.com/).
 
 ## Fields
 
-Hermes returns the following fields from each service
+Hermes returns the following fields from each service:
 
 - **MITIE**
     - `MITIE`:
