@@ -49,7 +49,7 @@ class MordecaiAPI(Resource):
 
     def call_mordecai(self):
         result_key = 'mordecai'
-        mordecai_ip = '52.5.183.171'
+        mordecai_ip = '0.0.0.0'
         mordecai_url = 'http://{}:{}/places'.format(mordecai_ip, '8999')
 
         try:

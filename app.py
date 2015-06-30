@@ -53,11 +53,13 @@ if __name__ == '__main__':
     except KeyError:
         app.logger.info('Unable to reach CLIFF on port 8080')
     headers = {'Content-Type': 'application/json'}
-    r = requests.get('http://52.5.183.171:8999/places', headers=headers)
+    mordecai_ip = '0.0.0.0'
+    r = requests.get('http://{}:8999/places'.format(mordecai_ip),
+                     headers=headers)
     if r.status_code == 200:
-        app.logger.info('Successfully reached Mordecai at 52.5.183.171')
+        app.logger.info('Successfully reached Mordecai at {}'.format(mordecai_ip))
     else:
-        app.logger.info('Unable to reach Mordecai at 52.5.183.171')
+        app.logger.info('Unable to reach Mordecai at {}'.format(mordecai_ip))
 
     http_server = HTTPServer(WSGIContainer(app))
     http_server.listen(5000)
