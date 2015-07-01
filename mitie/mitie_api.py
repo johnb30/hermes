@@ -2,10 +2,6 @@
 from __future__ import unicode_literals
 import sys
 import os
-
-parent = os.path.dirname(os.path.realpath(__file__))
-sys.path.append('/MITIE/mitielib')
-
 import logging
 from flask import Flask
 from flask.ext.restful import Api, Resource, reqparse
@@ -23,7 +19,8 @@ logging.basicConfig(format='%(levelname)s %(asctime)s %(filename)s %(lineno)d: %
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-ner = named_entity_extractor('/MITIE/MITIE-models/english/ner_model.dat')
+sys.path.append('/src/MITIE/mitielib')
+ner = named_entity_extractor('/src/MITIE/MITIE-models/english/ner_model.dat')
 
 
 class MitieAPI(Resource):
