@@ -51,7 +51,7 @@ class JoshuaAPI(Resource):
         joshua_payload = {'text': self.arabic_content}
 
         try:
-            joshua_ip = os.environ['JOSHUA_PORT_5002_TCP_ADDR']
+            joshua_ip = os.environ['JOSHUA_PORT_5009_TCP_ADDR']
             joshua_url = 'http://{}:{}'.format(joshua_ip, '5009')
             logger.info('Sending to joshua.')
             joshua_r = requests.post(joshua_url,

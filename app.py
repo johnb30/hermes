@@ -56,10 +56,10 @@ if __name__ == '__main__':
     except KeyError:
         app.logger.info('Unable to reach CLIFF on port 8080')
     try:
-        joshua_ip = os.environ['JOSHUA_PORT_8080_TCP_ADDR']
-        app.logger.info('Successfully reached JOSHUA on port 8080')
+        joshua_ip = os.environ['JOSHUA_PORT_5009_TCP_ADDR']
+        app.logger.info('Successfully reached JOSHUA on port 5009')
     except KeyError:
-        app.logger.info('Unable to reach JOSHUA on port 8080')
+        app.logger.info('Unable to reach JOSHUA on port 5009')
     headers = {'Content-Type': 'application/json'}
     mordecai_ip = '0.0.0.0'
     r = requests.get('http://{}:8999/places'.format(mordecai_ip),
