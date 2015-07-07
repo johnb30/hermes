@@ -32,7 +32,7 @@ def not_found(error):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(levelname)s %(asctime)s %(filename)s: %(message)s')
+    logging.basicConfig(format='%(levelname)s %(asctime)s %(filename)s %(lineno)d: %(message)s')
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     app.logger.info('Starting Hermes.')

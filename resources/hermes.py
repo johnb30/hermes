@@ -160,13 +160,13 @@ class HermesAPI(Resource):
             mordecai_payload = json.dumps({'text': self.content})
             mordecai_t = requests.post(mordecai_url, data=mordecai_payload,
                                        headers=mordecai_headers).json()
+            if mordecai_t:
+                mordecai_r = geolocation.process_mordecai(mordecai_t)
+            else:
+                mordecai_r = {}
         except requests.exceptions.RequestException as e:
             logger.error(e)
-            mordecai_t = {}
-        if mordecai_t:
-            mordecai_r = geolocation.process_mordecai(mordecai_t)
-        else:
-            mordecai_r = mordecai_t
+            mordecai_r = {}
 
         self.result[result_key] = mordecai_r
 
@@ -179,7 +179,6 @@ class HermesAPI(Resource):
             logger.info('Sending to the topic model.')
             topics_r = requests.post(topics_url,
                                      json=topics_payload).json()
-            topics_r = json.loads(topics_r)
         except KeyError:
             logger.warning('Unable to reach Topics container. Returning nothing.')
             topics_r = {}
