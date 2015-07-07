@@ -13,5 +13,8 @@ cliff:
   build: cliff/.
 topics:
   build: topics/.
+joshua:
+  image: caerusassociates/joshua:6.0.1
+  command: python /opt/joshua-v6.0.1/app.py
 #stanford:
 #  build: stanford/.

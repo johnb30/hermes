@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import os
 import json
+import langid
 import logging
 import requests
 import geolocation
@@ -38,13 +39,32 @@ class HermesAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('content', type=unicode, location='json')
+        self.reqparse.add_argument('lang', location='json')
+        langid.set_languages(['ar', 'en'])
         super(HermesAPI, self).__init__()
 
     def post(self):
         logger.info('Started processing content.')
 
         args = self.reqparse.parse_args()  # setup the request parameters
-        self.content = args['content']
+        if args['lang'] == 'ar':
+            self.content = ''
+            self.arabic_content = args['content']
+        elif args['lang'] == 'en':
+            self.content = args['content']
+            self.arabic_content = ''
+        elif not args['lang']:
+            lang = langid.classify(args['content'])[0]
+            if lang == 'ar':
+                self.content = ''
+                self.arabic_content = args['content']
+            elif lang == 'en':
+                self.content = args['content']
+                self.arabic_content = ''
+
+        if self.arabic_content:
+            self.content = self.call_joshua()
+
         self.result = {}
 
         funcs = [self.call_cliff, self.call_mitie, self.call_mordecai]
@@ -164,3 +184,18 @@ class HermesAPI(Resource):
             logger.warning('Unable to reach Topics container. Returning nothing.')
             topics_r = {}
         return topics_r
+
+    def call_joshua(self):
+        joshua_payload = {'text': self.arabic_content}
+
+        try:
+            joshua_ip = os.environ['JOSHUA_PORT_5002_TCP_ADDR']
+            joshua_url = 'http://{}:{}'.format(joshua_ip, '5009')
+            logger.info('Sending to joshua.')
+            joshua_r = requests.post(joshua_url,
+                                     json=joshua_payload).json()
+            joshua_r = json.loads(joshua_r)
+        except KeyError:
+            logger.warning('Unable to reach joshua container. Returning nothing.')
+            joshua_r = {}
+        return joshua_r
