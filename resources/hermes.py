@@ -45,6 +45,7 @@ class HermesAPI(Resource):
 
     def post(self):
         logger.info('Started processing content.')
+        self.result = {}
 
         args = self.reqparse.parse_args()  # setup the request parameters
         if args['lang'] == 'ar':
@@ -64,8 +65,7 @@ class HermesAPI(Resource):
 
         if self.arabic_content:
             self.content = self.call_joshua()
-
-        self.result = {}
+            self.result['translated_content'] = self.content
 
         funcs = [self.call_cliff, self.call_mitie, self.call_mordecai]
         threads = [Thread(target=f) for f in funcs]

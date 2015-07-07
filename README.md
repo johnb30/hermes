@@ -19,13 +19,7 @@ features in a box). The following services are currently implemented:
 - **Topic Model:** LDA model with 50 topics, implemented in
     [gensim](https://radimrehurek.com/gensim/). Designed for a specific set of
     topics. Only stories geolocated to Iraq or Syria are run through this container.
-- **Stanford CoreNLP:** Natural language processing provided by [Stanford
-    CoreNLP](http://nlp.stanford.edu/software/corenlp.shtml) v3.4.1 and served
-    from the container using
-    [this](https://bitbucket.org/torotoki/corenlp-python/overview) python
-    wrapper by Hiroyoshi Komatsu and Johannes Castner, which is a fork of
-    Dustin Smith's
-    [wrapper](https://github.com/dasmith/stanford-corenlp-python).
+- **Joshua:** [Machine translation](http://joshua-decoder.org/)
 
 ## Fields
 
@@ -68,6 +62,8 @@ Hermes returns the following fields from each service
         - `topic_strings`: Array of arrays that contains the string
           representation of the topic as the first entry in the inner arrays
           and the topic weighting as the second entry.
+- **Joshua**
+    - `translated_content`: English translation of Arabic text.
 
 
 ## Running
@@ -95,7 +91,8 @@ import json
 import requests
 
 headers = {'Content-Type': 'application/json'}
-data = {"content": "Insurgents bombarded a government-held part of Syria's second city Aleppo overnight, killing at least eight people, Syrian state media reported. The Syrian Observatory for Human Rights, a UK-based group that tracks the war, said eight people were killed in an air strike by government forces in a separate, rebel-held part of the city."}
+# Specification of the lang argument is optional.
+data = {"content": "Insurgents bombarded a government-held part of Syria's second city Aleppo overnight, killing at least eight people, Syrian state media reported. The Syrian Observatory for Human Rights, a UK-based group that tracks the war, said eight people were killed in an air strike by government forces in a separate, rebel-held part of the city.", "lang": "en"}
 data = json.dumps(data)
 out = requests.post('http://localhost:5000/', data=data, auth=('user', 'text2features'), headers=headers)
 ```
