@@ -46,7 +46,7 @@ if __name__ == '__main__':
     except KeyError:
         app.logger.info('Unable to reach MITIE on port 5001')
     try:
-        topics_ip = os.environ['TOPICS_PORT_5001_TCP_ADDR']
+        topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
         app.logger.info('Successfully reached Topics on port 5002')
     except KeyError:
         app.logger.info('Unable to reach Topics on port 5002')
