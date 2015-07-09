@@ -65,7 +65,9 @@ class HermesAPI(Resource):
 
         if self.arabic_content:
             self.content = self.call_joshua()
-            self.result['translated_content'] = self.content
+            self.result['joshua'] = self.content
+        else:
+            self.result['joshua'] = ''
 
         funcs = [self.call_cliff, self.call_mitie, self.call_mordecai]
         threads = [Thread(target=f) for f in funcs]
@@ -185,15 +187,18 @@ class HermesAPI(Resource):
         return topics_r
 
     def call_joshua(self):
-        joshua_payload = {'text': self.arabic_content}
+        joshua_payload = json.dumps({'text': self.arabic_content})
+        joshua_headers = {'Content-Type': 'application/json'}
 
         try:
             joshua_ip = os.environ['JOSHUA_PORT_5009_TCP_ADDR']
-            joshua_url = 'http://{}:{}'.format(joshua_ip, '5009')
+            joshua_url = 'http://{}:{}/joshua/translate'.format(joshua_ip,
+                                                                '5009')
             logger.info('Sending to joshua.')
-            joshua_r = requests.post(joshua_url,
-                                     json=joshua_payload).json()
-            joshua_r = json.loads(joshua_r)
+            joshua_r = requests.get(joshua_url, data=joshua_payload,
+                                    headers=joshua_headers).json()
+            joshua_r = joshua_r.replace('\n', '')
+            logger.info(joshua_r)
         except KeyError:
             logger.warning('Unable to reach joshua container. Returning nothing.')
             joshua_r = {}

@@ -17,7 +17,7 @@ topics:
 joshua:
   image: caerusassociates/joshua:6.0.1
   command: sh /opt/joshua-v6.0.1/setup.sh
-  ports:
-   - "5009:5009"
+  expose:
+   - 5009
 #stanford:
 #  build: stanford/.
