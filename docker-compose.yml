@@ -16,6 +16,8 @@ topics:
   build: topics/.
 joshua:
   image: caerusassociates/joshua:6.0.1
-  command: python /opt/joshua-v6.0.1/app.py
+  command: sh /opt/joshua-v6.0.1/setup.sh
+  ports:
+   - "5009:5009"
 #stanford:
 #  build: stanford/.
