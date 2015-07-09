@@ -9,6 +9,7 @@ from flask.ext.restful import Api
 from resources.hermes import HermesAPI
 from resources.mitie import MitieAPI
 from resources.cliff import CliffAPI
+from resources.joshua import JoshuaAPI
 from resources.topics import TopicsAPI
 from resources.mordecai import MordecaiAPI
 
@@ -20,6 +21,8 @@ api.add_resource(MitieAPI, '/hermes/mitie')
 api.add_resource(CliffAPI, '/hermes/cliff')
 api.add_resource(TopicsAPI, '/hermes/topics')
 api.add_resource(MordecaiAPI, '/hermes/mordecai')
+api.add_resource(JoshuaAPI, '/hermes/joshua')
+
 
 @app.errorhandler(400)
 def bad_request(error):
@@ -43,7 +46,7 @@ if __name__ == '__main__':
     except KeyError:
         app.logger.info('Unable to reach MITIE on port 5001')
     try:
-        topics_ip = os.environ['TOPICS_PORT_5001_TCP_ADDR']
+        topics_ip = os.environ['TOPICS_PORT_5002_TCP_ADDR']
         app.logger.info('Successfully reached Topics on port 5002')
     except KeyError:
         app.logger.info('Unable to reach Topics on port 5002')
@@ -52,6 +55,11 @@ if __name__ == '__main__':
         app.logger.info('Successfully reached CLIFF on port 8080')
     except KeyError:
         app.logger.info('Unable to reach CLIFF on port 8080')
+    try:
+        joshua_ip = os.environ['JOSHUA_PORT_5009_TCP_ADDR']
+        app.logger.info('Successfully reached JOSHUA on port 5009')
+    except KeyError:
+        app.logger.info('Unable to reach JOSHUA on port 5009')
     headers = {'Content-Type': 'application/json'}
     mordecai_ip = '0.0.0.0'
     r = requests.get('http://{}:8999/places'.format(mordecai_ip),

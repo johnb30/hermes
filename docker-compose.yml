@@ -4,6 +4,7 @@ hermes:
    - mitie
    - cliff
    - topics
+   - joshua
 #   - stanford
   ports:
    - "5000:5000"
@@ -13,5 +14,10 @@ cliff:
   build: cliff/.
 topics:
   build: topics/.
+joshua:
+  image: caerusassociates/joshua:6.0.1
+  command: sh /opt/joshua-v6.0.1/setup.sh
+  expose:
+   - 5009
 #stanford:
 #  build: stanford/.

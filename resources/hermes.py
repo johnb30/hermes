@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import os
 import json
+import langid
 import logging
 import requests
 import geolocation
@@ -38,14 +39,35 @@ class HermesAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('content', type=unicode, location='json')
+        self.reqparse.add_argument('lang', location='json')
+        langid.set_languages(['ar', 'en'])
         super(HermesAPI, self).__init__()
 
     def post(self):
         logger.info('Started processing content.')
+        self.result = {}
 
         args = self.reqparse.parse_args()  # setup the request parameters
-        self.content = args['content']
-        self.result = {}
+        if args['lang'] == 'ar':
+            self.content = ''
+            self.arabic_content = args['content']
+        elif args['lang'] == 'en':
+            self.content = args['content']
+            self.arabic_content = ''
+        elif not args['lang']:
+            lang = langid.classify(args['content'])[0]
+            if lang == 'ar':
+                self.content = ''
+                self.arabic_content = args['content']
+            elif lang == 'en':
+                self.content = args['content']
+                self.arabic_content = ''
+
+        if self.arabic_content:
+            self.content = self.call_joshua()
+            self.result['joshua'] = self.content
+        else:
+            self.result['joshua'] = ''
 
         funcs = [self.call_cliff, self.call_mitie, self.call_mordecai]
         threads = [Thread(target=f) for f in funcs]
@@ -163,3 +185,21 @@ class HermesAPI(Resource):
             logger.warning('Unable to reach Topics container. Returning nothing.')
             topics_r = {}
         return topics_r
+
+    def call_joshua(self):
+        joshua_payload = json.dumps({'text': self.arabic_content})
+        joshua_headers = {'Content-Type': 'application/json'}
+
+        try:
+            joshua_ip = os.environ['JOSHUA_PORT_5009_TCP_ADDR']
+            joshua_url = 'http://{}:{}/joshua/translate'.format(joshua_ip,
+                                                                '5009')
+            logger.info('Sending to joshua.')
+            joshua_r = requests.get(joshua_url, data=joshua_payload,
+                                    headers=joshua_headers).json()
+            joshua_r = joshua_r.replace('\n', '')
+            logger.info(joshua_r)
+        except KeyError:
+            logger.warning('Unable to reach joshua container. Returning nothing.')
+            joshua_r = {}
+        return joshua_r
